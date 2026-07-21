@@ -1,32 +1,35 @@
-# React + TypeScript + Vite
+# plops 🫧
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The dreamy **fair-launch launchpad** built natively on the **Robinhood Chain**.
+Discover, stake, and back the next generation of tokens — safely and beautifully.
 
-Currently, two official plugins are available:
+A glow / dreamy aesthetic landing site (blue · green · white · pink) built with
+Vite + React + TypeScript + Tailwind CSS.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Sections
+- Hero with live launch preview card + stats
+- Feature marquee
+- Launchpad grid with Live / Upcoming / Ended filters
+- Why plops (features)
+- How it works (4 steps)
+- Roadmap
+- FAQ accordion
+- CTA + footer
 
-## React Compiler
+## Getting started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev      # start dev server
+npm run build    # type-check + production build
+npm run lint     # oxlint
+npm run preview  # preview the production build
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Then open the printed local URL (default http://localhost:5173).
+
+## Tech stack
+- [Vite](https://vitejs.dev/) + [React](https://react.dev/) + TypeScript
+- [Tailwind CSS](https://tailwindcss.com/) for styling and the dreamy theme
+
+> Not financial advice. Demo project.
