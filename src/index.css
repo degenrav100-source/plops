@@ -1,0 +1,60 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  background-color: #eaf3ff;
+  color: #0c1330;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+@layer components {
+  .glass {
+    @apply border border-white/60 bg-white/50 backdrop-blur-xl;
+  }
+  .glass-dark {
+    @apply border border-white/15 bg-white/10 backdrop-blur-xl;
+  }
+  .text-gradient {
+    @apply bg-dreamy bg-clip-text text-transparent;
+    background-size: 200% 200%;
+  }
+  .btn-primary {
+    @apply relative inline-flex items-center justify-center rounded-full bg-dreamy px-7 py-3 font-semibold text-plops-ink shadow-glow transition-all duration-300 hover:-translate-y-0.5 hover:shadow-glow-pink;
+    background-size: 200% 200%;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-full border border-plops-blue/30 bg-white/60 px-7 py-3 font-semibold text-plops-ink backdrop-blur-md transition-all duration-300 hover:border-plops-blue/60 hover:bg-white/80;
+  }
+  .section {
+    @apply mx-auto w-full max-w-6xl px-6;
+  }
+  .chip {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-4 py-1.5 text-sm font-medium text-plops-ink/70 backdrop-blur-md;
+  }
+}
+
+/* dreamy scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(#7cd8ff, #ff9ecd);
+  border-radius: 999px;
+}
