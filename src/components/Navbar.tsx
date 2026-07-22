@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
+import ConnectButton from "./ConnectButton";
 import type { Theme } from "../hooks/useTheme";
+import { useWallet } from "../wallet/context";
+import { useToast } from "../toast/context";
 
 const links = [
   { label: "Launches", href: "#launches" },
@@ -19,6 +22,8 @@ interface Props {
 export default function Navbar({ theme, toggleTheme }: Props) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const { connection, openModal } = useWallet();
+  const { notify } = useToast();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -26,6 +31,16 @@ export default function Navbar({ theme, toggleTheme }: Props) {
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const launchApp = () => {
+    setOpen(false);
+    if (!connection) {
+      openModal();
+      return;
+    }
+    document.getElementById("launches")?.scrollIntoView({ behavior: "smooth" });
+    notify("Wallet connected — pick a launch to join.");
+  };
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4">
@@ -51,9 +66,10 @@ export default function Navbar({ theme, toggleTheme }: Props) {
 
         <div className="hidden items-center gap-3 md:flex">
           <ThemeToggle theme={theme} toggle={toggleTheme} />
-          <a href="#launches" className="btn-primary text-sm">
+          <ConnectButton />
+          <button type="button" onClick={launchApp} className="btn-primary text-sm">
             Launch App
-          </a>
+          </button>
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
@@ -83,9 +99,12 @@ export default function Navbar({ theme, toggleTheme }: Props) {
               </li>
             ))}
           </ul>
-          <a href="#launches" onClick={() => setOpen(false)} className="btn-primary mt-2 w-full text-sm">
-            Launch App
-          </a>
+          <div className="mt-2 flex flex-col gap-2">
+            <ConnectButton className="w-full" />
+            <button type="button" onClick={launchApp} className="btn-primary w-full text-sm">
+              Launch App
+            </button>
+          </div>
         </div>
       )}
     </header>
