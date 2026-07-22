@@ -1,5 +1,6 @@
 import Background from "./components/Background";
 import Navbar from "./components/Navbar";
+import { useTheme } from "./hooks/useTheme";
 import Hero from "./components/Hero";
 import Marquee from "./components/Marquee";
 import Launches from "./components/Launches";
@@ -11,10 +12,11 @@ import CTA from "./components/CTA";
 import Footer from "./components/Footer";
 
 export default function App() {
+  const { theme, toggle } = useTheme();
   return (
     <div className="relative min-h-screen">
       <Background />
-      <Navbar />
+      <Navbar theme={theme} toggleTheme={toggle} />
       <main>
         <Hero />
         <Marquee />

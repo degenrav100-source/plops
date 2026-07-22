@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "class",
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
@@ -11,7 +12,10 @@ export default {
           mint: "#a8f5d8",
           pink: "#ff9ecd",
           rose: "#ffc4e1",
-          ink: "#0c1330",
+          // theme-aware tokens (driven by CSS vars in index.css)
+          ink: "rgb(var(--plops-ink) / <alpha-value>)",
+          surface: "rgb(var(--plops-surface) / <alpha-value>)",
+          edge: "rgb(var(--plops-edge) / <alpha-value>)",
           night: "#070b1f",
         },
       },

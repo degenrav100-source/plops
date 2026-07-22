@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import Logo from "./Logo";
+import ThemeToggle from "./ThemeToggle";
+import type { Theme } from "../hooks/useTheme";
 
 const links = [
   { label: "Launches", href: "#launches" },
@@ -9,7 +11,12 @@ const links = [
   { label: "FAQ", href: "#faq" },
 ];
 
-export default function Navbar() {
+interface Props {
+  theme: Theme;
+  toggleTheme: () => void;
+}
+
+export default function Navbar({ theme, toggleTheme }: Props) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -34,7 +41,7 @@ export default function Navbar() {
             <li key={l.href}>
               <a
                 href={l.href}
-                className="rounded-full px-4 py-2 text-sm font-medium text-plops-ink/70 transition-colors hover:bg-white/60 hover:text-plops-ink"
+                className="rounded-full px-4 py-2 text-sm font-medium text-plops-ink/70 transition-colors hover:bg-plops-surface/60 hover:text-plops-ink"
               >
                 {l.label}
               </a>
@@ -43,18 +50,22 @@ export default function Navbar() {
         </ul>
 
         <div className="hidden items-center gap-3 md:flex">
+          <ThemeToggle theme={theme} toggle={toggleTheme} />
           <a href="#launches" className="btn-primary text-sm">
             Launch App
           </a>
         </div>
 
-        <button
-          aria-label="Toggle menu"
-          onClick={() => setOpen((v) => !v)}
-          className="flex h-10 w-10 items-center justify-center rounded-full glass md:hidden"
-        >
-          <span className="text-lg">{open ? "✕" : "☰"}</span>
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle theme={theme} toggle={toggleTheme} />
+          <button
+            aria-label="Toggle menu"
+            onClick={() => setOpen((v) => !v)}
+            className="flex h-10 w-10 items-center justify-center rounded-full glass"
+          >
+            <span className="text-lg">{open ? "✕" : "☰"}</span>
+          </button>
+        </div>
       </nav>
 
       {open && (
@@ -65,7 +76,7 @@ export default function Navbar() {
                 <a
                   href={l.href}
                   onClick={() => setOpen(false)}
-                  className="block rounded-2xl px-4 py-3 text-sm font-medium text-plops-ink/80 hover:bg-white/70"
+                  className="block rounded-2xl px-4 py-3 text-sm font-medium text-plops-ink/80 hover:bg-plops-surface/70"
                 >
                   {l.label}
                 </a>
