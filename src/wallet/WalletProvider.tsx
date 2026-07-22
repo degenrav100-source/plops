@@ -10,6 +10,14 @@ import type {
 
 const LAST_WALLET_KEY = "plops-last-wallet";
 
+type ProviderHandler = (...args: unknown[]) => void;
+
+interface ActiveListeners {
+  provider: Eip1193Provider;
+  accountsChanged: ProviderHandler;
+  chainChanged: ProviderHandler;
+}
+
 function asString(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
@@ -20,7 +28,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
-  const activeProvider = useRef<Eip1193Provider | null>(null);
+  const activeListeners = useRef<ActiveListeners | null>(null);
+
+  const detachProvider = useCallback(() => {
+    const current = activeListeners.current;
+    if (!current) return;
+    current.provider.removeListener?.("accountsChanged", current.accountsChanged);
+    current.provider.removeListener?.("chainChanged", current.chainChanged);
+    activeListeners.current = null;
+  }, []);
 
   // EIP-6963: discover installed wallets and their real icons.
   useEffect(() => {
@@ -81,8 +97,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const attachProvider = useCallback(
     (provider: Eip1193Provider) => {
-      activeProvider.current = provider;
-      provider.on?.("accountsChanged", (accounts: unknown) => {
+      detachProvider();
+      const accountsChanged: ProviderHandler = (accounts: unknown) => {
         const list = Array.isArray(accounts) ? accounts : [];
         const address = asString(list[0]);
         if (!address) {
@@ -91,12 +107,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           return;
         }
         setConnection((prev) => (prev ? { ...prev, address } : prev));
-      });
-      provider.on?.("chainChanged", (chainId: unknown) => {
+      };
+      const chainChanged: ProviderHandler = (chainId: unknown) => {
         setConnection((prev) => (prev ? { ...prev, chainId: asString(chainId) } : prev));
-      });
+      };
+      provider.on?.("accountsChanged", accountsChanged);
+      provider.on?.("chainChanged", chainChanged);
+      activeListeners.current = { provider, accountsChanged, chainChanged };
     },
-    [],
+    [detachProvider],
   );
 
   const connect = useCallback(
@@ -163,9 +182,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const disconnect = useCallback(() => {
     setConnection(null);
     setError(null);
-    activeProvider.current = null;
+    detachProvider();
     window.localStorage.removeItem(LAST_WALLET_KEY);
-  }, []);
+  }, [detachProvider]);
+
+  // Detach any live provider listeners on unmount.
+  useEffect(() => detachProvider, [detachProvider]);
 
   const openModal = useCallback(() => {
     setError(null);
