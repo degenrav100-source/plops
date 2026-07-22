@@ -40,7 +40,7 @@ export default function Launches() {
               key={t.key}
               onClick={() => setTab(t.key)}
               className={`rounded-full px-5 py-2 text-sm font-semibold transition-all ${
-                tab === t.key ? "bg-dreamy text-plops-ink shadow-glow" : "text-plops-ink/60 hover:text-plops-ink"
+                tab === t.key ? "bg-dreamy text-[#0c1330] shadow-glow" : "text-plops-ink/60 hover:text-plops-ink"
               }`}
             >
               {t.label}
@@ -59,7 +59,7 @@ export default function Launches() {
 
             <div className="relative flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/70 text-2xl shadow-sm">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-plops-surface/70 text-2xl shadow-sm">
                   {p.emoji}
                 </span>
                 <div>
@@ -75,7 +75,7 @@ export default function Launches() {
                 <span>{p.status === "upcoming" ? "Target" : "Raised"}</span>
                 <span className="font-semibold text-plops-ink">{p.raise}</span>
               </div>
-              <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-white/60">
+              <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-plops-surface/60">
                 <div
                   className="h-full rounded-full bg-dreamy transition-all duration-500"
                   style={{ width: `${p.status === "upcoming" ? 4 : p.progress}%` }}
@@ -86,7 +86,7 @@ export default function Launches() {
               )}
             </div>
 
-            <div className="relative mt-5 flex items-center justify-between rounded-2xl bg-white/50 px-4 py-3">
+            <div className="relative mt-5 flex items-center justify-between rounded-2xl bg-plops-surface/50 px-4 py-3">
               <div>
                 <p className="text-xs text-plops-ink/50">Price</p>
                 <p className="font-semibold text-plops-ink">{p.price}</p>

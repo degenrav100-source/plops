@@ -6,6 +6,19 @@
 
 :root {
   color-scheme: light;
+  /* theme tokens (space-separated RGB for Tailwind alpha) */
+  --plops-ink: 12 19 48;
+  --plops-surface: 255 255 255;
+  --plops-edge: 255 255 255;
+  --plops-page: #eaf3ff;
+}
+
+.dark {
+  color-scheme: dark;
+  --plops-ink: 227 236 255;
+  --plops-surface: 44 56 102;
+  --plops-edge: 150 172 240;
+  --plops-page: #05060f;
 }
 
 html {
@@ -15,15 +28,19 @@ html {
 body {
   margin: 0;
   font-family: "Space Grotesk", system-ui, sans-serif;
-  background-color: #eaf3ff;
-  color: #0c1330;
+  background-color: var(--plops-page);
+  color: rgb(var(--plops-ink));
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 @layer components {
   .glass {
-    @apply border border-white/60 bg-white/50 backdrop-blur-xl;
+    @apply border border-plops-edge/60 bg-plops-surface/50 backdrop-blur-xl;
+  }
+  .dark .glass {
+    @apply border-plops-edge/20 bg-plops-surface/25;
   }
   .glass-dark {
     @apply border border-white/15 bg-white/10 backdrop-blur-xl;
@@ -33,17 +50,23 @@ body {
     background-size: 200% 200%;
   }
   .btn-primary {
-    @apply relative inline-flex items-center justify-center rounded-full bg-dreamy px-7 py-3 font-semibold text-plops-ink shadow-glow transition-all duration-300 hover:-translate-y-0.5 hover:shadow-glow-pink;
+    @apply relative inline-flex items-center justify-center rounded-full bg-dreamy px-7 py-3 font-semibold text-[#0c1330] shadow-glow transition-all duration-300 hover:-translate-y-0.5 hover:shadow-glow-pink;
     background-size: 200% 200%;
   }
   .btn-ghost {
-    @apply inline-flex items-center justify-center rounded-full border border-plops-blue/30 bg-white/60 px-7 py-3 font-semibold text-plops-ink backdrop-blur-md transition-all duration-300 hover:border-plops-blue/60 hover:bg-white/80;
+    @apply inline-flex items-center justify-center rounded-full border border-plops-blue/30 bg-plops-surface/60 px-7 py-3 font-semibold text-plops-ink backdrop-blur-md transition-all duration-300 hover:border-plops-blue/60 hover:bg-plops-surface/80;
+  }
+  .dark .btn-ghost {
+    @apply bg-plops-surface/25 hover:bg-plops-surface/40;
   }
   .section {
     @apply mx-auto w-full max-w-6xl px-6;
   }
   .chip {
-    @apply inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-4 py-1.5 text-sm font-medium text-plops-ink/70 backdrop-blur-md;
+    @apply inline-flex items-center gap-2 rounded-full border border-plops-edge/60 bg-plops-surface/60 px-4 py-1.5 text-sm font-medium text-plops-ink/70 backdrop-blur-md;
+  }
+  .dark .chip {
+    @apply border-plops-edge/20 bg-plops-surface/25;
   }
 }
 

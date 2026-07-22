@@ -2,13 +2,25 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="plops — the dreamy fair-launch launchpad built natively on the Robinhood Chain. Discover, stake, and back the next generation of tokens." />
     <meta property="og:title" content="plops · Launchpad on the Robinhood Chain" />
     <meta property="og:description" content="The dreamy fair-launch launchpad on the Robinhood Chain." />
     <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#05060f" />
     <title>plops · Launchpad on the Robinhood Chain</title>
+    <script>
+      // Apply saved theme before paint to avoid a flash (defaults to dark).
+      (function () {
+        try {
+          var t = localStorage.getItem("plops-theme");
+          if (t !== "light") document.documentElement.classList.add("dark");
+        } catch (e) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

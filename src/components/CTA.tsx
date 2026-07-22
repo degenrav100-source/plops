@@ -8,22 +8,22 @@ export default function CTA() {
         <div className="absolute -bottom-12 right-0 h-56 w-56 animate-float-slow rounded-full bg-white/30 blur-2xl" />
 
         <div className="relative">
-          <h2 className="mx-auto max-w-2xl font-display text-4xl font-bold text-plops-ink md:text-5xl">
+          <h2 className="mx-auto max-w-2xl font-display text-4xl font-bold text-[#0c1330] md:text-5xl">
             Ready to make your first plop?
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-plops-ink/80">
+          <p className="mx-auto mt-4 max-w-xl text-lg text-[#0c1330]/80">
             Join thousands of ploppers launching and backing the next wave of tokens on the Robinhood Chain.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <a
               href="#launches"
-              className="inline-flex items-center justify-center rounded-full bg-plops-ink px-8 py-3.5 font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5"
+              className="inline-flex items-center justify-center rounded-full bg-[#0c1330] px-8 py-3.5 font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5"
             >
               Launch App →
             </a>
             <a
               href="#how"
-              className="inline-flex items-center justify-center rounded-full border border-plops-ink/20 bg-white/50 px-8 py-3.5 font-semibold text-plops-ink backdrop-blur-md transition-colors hover:bg-white/70"
+              className="inline-flex items-center justify-center rounded-full border border-[#0c1330]/20 bg-white/60 px-8 py-3.5 font-semibold text-[#0c1330] backdrop-blur-md transition-colors hover:bg-white/80"
             >
               Read the docs
             </a>

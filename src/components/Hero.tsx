@@ -48,7 +48,7 @@ export default function Hero() {
                 <span>Raised</span>
                 <span className="font-semibold text-plops-ink">$302,400 / $420,000</span>
               </div>
-              <div className="mt-2 h-3 overflow-hidden rounded-full bg-white/60">
+              <div className="mt-2 h-3 overflow-hidden rounded-full bg-plops-surface/60">
                 <div className="h-full w-[72%] rounded-full bg-dreamy shadow-glow" />
               </div>
             </div>
@@ -59,7 +59,7 @@ export default function Hero() {
                 { k: "Ends in", v: "18h 42m" },
                 { k: "Tier", v: "Sapphire" },
               ].map((i) => (
-                <div key={i.k} className="rounded-2xl bg-white/50 p-3">
+                <div key={i.k} className="rounded-2xl bg-plops-surface/50 p-3">
                   <p className="text-xs text-plops-ink/50">{i.k}</p>
                   <p className="font-semibold text-plops-ink">{i.v}</p>
                 </div>

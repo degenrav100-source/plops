@@ -43,7 +43,7 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-white/50 pt-6 text-sm text-plops-ink/55 md:flex-row">
+        <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-plops-edge/50 pt-6 text-sm text-plops-ink/55 md:flex-row">
           <p>© {new Date().getFullYear()} plops. All rights reserved.</p>
           <p>Built on the Robinhood Chain · Not financial advice.</p>
         </div>
