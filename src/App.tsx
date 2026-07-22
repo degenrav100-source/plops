@@ -10,24 +10,32 @@ import Roadmap from "./components/Roadmap";
 import FAQ from "./components/FAQ";
 import CTA from "./components/CTA";
 import Footer from "./components/Footer";
+import WalletModal from "./components/WalletModal";
+import { WalletProvider } from "./wallet/WalletProvider";
+import { ToastProvider } from "./toast/ToastProvider";
 
 export default function App() {
   const { theme, toggle } = useTheme();
   return (
-    <div className="relative min-h-screen">
-      <Background />
-      <Navbar theme={theme} toggleTheme={toggle} />
-      <main>
-        <Hero />
-        <Marquee />
-        <Launches />
-        <Features />
-        <HowItWorks />
-        <Roadmap />
-        <FAQ />
-        <CTA />
-      </main>
-      <Footer />
-    </div>
+    <ToastProvider>
+      <WalletProvider>
+        <div className="relative min-h-screen">
+          <Background />
+          <Navbar theme={theme} toggleTheme={toggle} />
+          <main>
+            <Hero />
+            <Marquee />
+            <Launches />
+            <Features />
+            <HowItWorks />
+            <Roadmap />
+            <FAQ />
+            <CTA />
+          </main>
+          <Footer />
+          <WalletModal />
+        </div>
+      </WalletProvider>
+    </ToastProvider>
   );
 }

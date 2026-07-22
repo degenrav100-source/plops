@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { launches, type LaunchStatus } from "../data";
+import { launches, type LaunchProject, type LaunchStatus } from "../data";
 import SectionHeading from "./SectionHeading";
+import { useWallet } from "../wallet/context";
+import { useToast } from "../toast/context";
 
 const tabs: { key: LaunchStatus | "all"; label: string }[] = [
   { key: "all", label: "All" },
@@ -24,6 +26,24 @@ const statusLabel: Record<LaunchStatus, string> = {
 export default function Launches() {
   const [tab, setTab] = useState<LaunchStatus | "all">("all");
   const visible = tab === "all" ? launches : launches.filter((l) => l.status === tab);
+  const { connection, openModal } = useWallet();
+  const { notify } = useToast();
+
+  const handleAction = (p: LaunchProject) => {
+    if (p.status === "upcoming") {
+      notify(`You'll be reminded when ${p.name} goes live. 🔔`);
+      return;
+    }
+    if (p.status === "ended") {
+      notify(`${p.name} has ended — raised ${p.raise}.`);
+      return;
+    }
+    if (!connection) {
+      openModal();
+      return;
+    }
+    notify(`Joining ${p.name} — confirm in your wallet.`);
+  };
 
   return (
     <section id="launches" className="section py-24">
@@ -91,7 +111,7 @@ export default function Launches() {
                 <p className="text-xs text-plops-ink/50">Price</p>
                 <p className="font-semibold text-plops-ink">{p.price}</p>
               </div>
-              <button className="btn-primary !px-5 !py-2 text-sm">
+              <button onClick={() => handleAction(p)} className="btn-primary !px-5 !py-2 text-sm">
                 {p.status === "live" ? "Join" : p.status === "upcoming" ? "Remind me" : "View"}
               </button>
             </div>
