@@ -35,7 +35,11 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
-  const [deployed, setDeployed] = useState<{ address: string; txHash: string } | null>(null);
+  const [deployed, setDeployed] = useState<{
+    address: string;
+    txHash: string;
+    chainKey: ChainKey;
+  } | null>(null);
 
   const chain = CHAINS[chainKey];
 
@@ -107,7 +111,7 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
         creator: connection.address,
         createdAt: Date.now(),
       });
-      setDeployed(res);
+      setDeployed({ ...res, chainKey });
       setStatus("");
       notify(`🎉 ${symbol.trim().toUpperCase()} deployed on ${chain.short}!`);
     } catch (err) {
@@ -120,6 +124,7 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
   };
 
   if (deployed) {
+    const deployedChain = CHAINS[deployed.chainKey];
     return (
       <div className="text-center">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-dreamy text-3xl shadow-glow">
@@ -127,11 +132,11 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
         </div>
         <h3 className="text-xl font-bold text-plops-ink">Token deployed!</h3>
         <p className="mt-1 text-sm text-plops-ink/60">
-          {name} (${symbol.toUpperCase()}) is live on {chain.chainName}.
+          {name} (${symbol.toUpperCase()}) is live on {deployedChain.chainName}.
         </p>
         <div className="mt-5 flex flex-col gap-2">
           <a
-            href={explorerToken(chain, deployed.address)}
+            href={explorerToken(deployedChain, deployed.address)}
             target="_blank"
             rel="noopener noreferrer"
             className="btn-ghost text-sm"
@@ -140,7 +145,7 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
           </a>
           {deployed.txHash && (
             <a
-              href={explorerTx(chain, deployed.txHash)}
+              href={explorerTx(deployedChain, deployed.txHash)}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-plops-ink/50 hover:text-plops-ink"
