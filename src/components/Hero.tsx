@@ -1,6 +1,8 @@
 import { stats } from "../data";
+import { useLaunch } from "../launch/context";
 
 export default function Hero() {
+  const { openLaunch } = useLaunch();
   return (
     <section id="top" className="relative flex flex-col items-center px-6 pt-36 pb-16 text-center md:pt-44">
       <div className="section flex flex-col items-center">
@@ -20,11 +22,11 @@ export default function Hero() {
         </p>
 
         <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
-          <a href="#launches" className="btn-primary">
-            Explore Launches →
-          </a>
-          <a href="#how" className="btn-ghost">
-            How it works
+          <button type="button" onClick={() => openLaunch("create")} className="btn-primary">
+            Launch a token →
+          </button>
+          <a href="#launches" className="btn-ghost">
+            Explore launches
           </a>
         </div>
 
