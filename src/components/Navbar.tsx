@@ -3,8 +3,7 @@ import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 import ConnectButton from "./ConnectButton";
 import type { Theme } from "../hooks/useTheme";
-import { useWallet } from "../wallet/context";
-import { useToast } from "../toast/context";
+import { useLaunch } from "../launch/context";
 
 const links = [
   { label: "Launches", href: "#launches" },
@@ -22,8 +21,7 @@ interface Props {
 export default function Navbar({ theme, toggleTheme }: Props) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const { connection, openModal } = useWallet();
-  const { notify } = useToast();
+  const { openLaunch } = useLaunch();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -32,14 +30,9 @@ export default function Navbar({ theme, toggleTheme }: Props) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const launchApp = () => {
+  const launchToken = () => {
     setOpen(false);
-    if (!connection) {
-      openModal();
-      return;
-    }
-    document.getElementById("launches")?.scrollIntoView({ behavior: "smooth" });
-    notify("Wallet connected — pick a launch to join.");
+    openLaunch("create");
   };
 
   return (
@@ -67,8 +60,8 @@ export default function Navbar({ theme, toggleTheme }: Props) {
         <div className="hidden items-center gap-3 md:flex">
           <ThemeToggle theme={theme} toggle={toggleTheme} />
           <ConnectButton />
-          <button type="button" onClick={launchApp} className="btn-primary text-sm">
-            Launch App
+          <button type="button" onClick={launchToken} className="btn-primary text-sm">
+            Launch token
           </button>
         </div>
 
@@ -101,8 +94,8 @@ export default function Navbar({ theme, toggleTheme }: Props) {
           </ul>
           <div className="mt-2 flex flex-col gap-2">
             <ConnectButton className="w-full" />
-            <button type="button" onClick={launchApp} className="btn-primary w-full text-sm">
-              Launch App
+            <button type="button" onClick={launchToken} className="btn-primary w-full text-sm">
+              Launch token
             </button>
           </div>
         </div>

@@ -1,18 +1,9 @@
-import { useWallet } from "../wallet/context";
 import { useToast } from "../toast/context";
+import { useLaunch } from "../launch/context";
 
 export default function CTA() {
-  const { connection, openModal } = useWallet();
   const { notify } = useToast();
-
-  const launchApp = () => {
-    if (!connection) {
-      openModal();
-      return;
-    }
-    document.getElementById("launches")?.scrollIntoView({ behavior: "smooth" });
-    notify("Wallet connected — pick a launch to join.");
-  };
+  const { openLaunch } = useLaunch();
 
   return (
     <section className="section py-16">
@@ -32,10 +23,10 @@ export default function CTA() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <button
               type="button"
-              onClick={launchApp}
+              onClick={() => openLaunch("create")}
               className="inline-flex items-center justify-center rounded-full bg-[#0c1330] px-8 py-3.5 font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5"
             >
-              {connection ? "Explore launches →" : "Connect wallet →"}
+              Launch your token →
             </button>
             <button
               type="button"

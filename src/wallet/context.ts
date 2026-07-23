@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react";
-import type { WalletConnection, WalletOption } from "./types";
+import type { Eip1193Provider, WalletConnection, WalletOption } from "./types";
+import type { ChainConfig } from "./chains";
 
 export interface WalletContextValue {
   connection: WalletConnection | null;
@@ -11,6 +12,9 @@ export interface WalletContextValue {
   closeModal: () => void;
   connect: (wallet: WalletOption) => Promise<void>;
   disconnect: () => void;
+  activeProvider: Eip1193Provider | null;
+  /** Ensure the wallet is on the given chain, adding it if unknown. */
+  switchChain: (chain: ChainConfig) => Promise<void>;
 }
 
 export const WalletContext = createContext<WalletContextValue | null>(null);

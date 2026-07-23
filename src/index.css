@@ -68,6 +68,12 @@ body {
   .dark .chip {
     @apply border-plops-edge/20 bg-plops-surface/25;
   }
+  .plops-input {
+    @apply w-full rounded-xl border border-plops-edge/50 bg-plops-surface/50 px-3.5 py-2.5 text-sm text-plops-ink outline-none transition-colors placeholder:text-plops-ink/35 focus:border-plops-blue/70 focus:bg-plops-surface/70;
+  }
+  .dark .plops-input {
+    @apply border-plops-edge/25 bg-plops-surface/25 focus:bg-plops-surface/40;
+  }
 }
 
 /* dreamy scrollbar */

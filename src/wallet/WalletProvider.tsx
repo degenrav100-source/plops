@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { WalletContext } from "./context";
 import { curatedWallets } from "./wallets";
+import type { ChainConfig } from "./chains";
 import type {
   Eip1193Provider,
   Eip6963ProviderDetail,
@@ -9,6 +10,10 @@ import type {
 } from "./types";
 
 const LAST_WALLET_KEY = "plops-last-wallet";
+
+interface ProviderRpcError {
+  code?: number;
+}
 
 type ProviderHandler = (...args: unknown[]) => void;
 
@@ -28,6 +33,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
+  const [activeProvider, setActiveProvider] = useState<Eip1193Provider | null>(null);
   const activeListeners = useRef<ActiveListeners | null>(null);
 
   const detachProvider = useCallback(() => {
@@ -137,6 +143,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         }
         applyAccounts(accounts, wallet, chainId);
         attachProvider(wallet.provider);
+        setActiveProvider(wallet.provider);
         window.localStorage.setItem(LAST_WALLET_KEY, wallet.rdns);
         setModalOpen(false);
       } catch (err) {
@@ -170,6 +177,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         }
         applyAccounts(accounts, wallet, chainId);
         attachProvider(wallet.provider!);
+        setActiveProvider(wallet.provider!);
       } catch {
         /* ignore silent reconnect errors */
       }
@@ -183,8 +191,41 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setConnection(null);
     setError(null);
     detachProvider();
+    setActiveProvider(null);
     window.localStorage.removeItem(LAST_WALLET_KEY);
   }, [detachProvider]);
+
+  const switchChain = useCallback(
+    async (chain: ChainConfig) => {
+      if (!activeProvider) throw new Error("Connect a wallet first");
+      try {
+        await activeProvider.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: chain.chainIdHex }],
+        });
+      } catch (err) {
+        const code = (err as ProviderRpcError)?.code;
+        // 4902 = chain not added to the wallet yet.
+        if (code === 4902 || code === -32603) {
+          await activeProvider.request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId: chain.chainIdHex,
+                chainName: chain.chainName,
+                nativeCurrency: chain.nativeCurrency,
+                rpcUrls: chain.rpcUrls,
+                blockExplorerUrls: chain.blockExplorerUrls,
+              },
+            ],
+          });
+        } else {
+          throw err;
+        }
+      }
+    },
+    [activeProvider],
+  );
 
   // Detach any live provider listeners on unmount.
   useEffect(() => detachProvider, [detachProvider]);
@@ -206,8 +247,22 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       closeModal,
       connect,
       disconnect,
+      activeProvider,
+      switchChain,
     }),
-    [connection, wallets, connectingId, error, isModalOpen, openModal, closeModal, connect, disconnect],
+    [
+      connection,
+      wallets,
+      connectingId,
+      error,
+      isModalOpen,
+      openModal,
+      closeModal,
+      connect,
+      disconnect,
+      activeProvider,
+      switchChain,
+    ],
   );
 
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
