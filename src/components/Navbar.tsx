@@ -78,7 +78,16 @@ export default function Navbar({ theme, toggleTheme }: Props) {
       </nav>
 
       {open && (
-        <div className="absolute top-20 left-4 right-4 rounded-3xl glass p-4 shadow-soft md:hidden">
+        <button
+          type="button"
+          aria-label="Close menu"
+          onClick={() => setOpen(false)}
+          className="fixed inset-0 -z-10 cursor-default bg-plops-night/50 backdrop-blur-sm md:hidden"
+        />
+      )}
+
+      {open && (
+        <div className="absolute top-20 left-4 right-4 rounded-3xl border border-plops-edge/40 bg-plops-surface p-4 shadow-soft backdrop-blur-xl md:hidden">
           <ul className="flex flex-col gap-1">
             {links.map((l) => (
               <li key={l.href}>
