@@ -3,7 +3,7 @@ import Navbar from "./components/Navbar";
 import { useTheme } from "./hooks/useTheme";
 import Hero from "./components/Hero";
 import Marquee from "./components/Marquee";
-import Launches from "./components/Launches";
+import LaunchedTokens from "./components/LaunchedTokens";
 import Features from "./components/Features";
 import HowItWorks from "./components/HowItWorks";
 import Roadmap from "./components/Roadmap";
@@ -27,7 +27,7 @@ export default function App() {
             <main>
               <Hero />
               <Marquee />
-              <Launches />
+              <LaunchedTokens />
               <Features />
               <HowItWorks />
               <Roadmap />
