@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import SectionHeading from "./SectionHeading";
 import { useWallet } from "../wallet/context";
 import { useLaunch } from "../launch/context";
@@ -21,14 +21,19 @@ export default function LaunchedTokens() {
   const [filter, setFilter] = useState<Filter>("all");
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
+  const loadId = useRef(0);
 
   const account = connection?.address;
   const chain = CHAINS[chainKey];
 
   const load = useCallback(async () => {
+    const requestId = ++loadId.current;
     const stored = listTokens(chainKey);
     setRows(stored.map((s) => ({ stored: s, data: null })));
-    if (stored.length === 0) return;
+    if (stored.length === 0) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const results = await Promise.all(
       stored.map(async (s): Promise<Row> => {
@@ -40,6 +45,7 @@ export default function LaunchedTokens() {
         }
       }),
     );
+    if (requestId !== loadId.current) return;
     setRows(results);
     setLoading(false);
   }, [chainKey, chain, account]);
