@@ -54,18 +54,18 @@ export default function LaunchTokenModal() {
         type="button"
         aria-label="Close"
         onClick={close}
-        className="fixed inset-0 bg-plops-night/60 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
       />
-      <div className="glass relative z-10 w-full max-w-2xl rounded-[2rem] p-6 shadow-soft md:p-8">
+      <div className="relative z-10 w-full max-w-2xl rounded-xl border border-plops-edge bg-plops-surface p-6 shadow-2xl md:p-8">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="font-display text-2xl font-bold text-plops-ink">Launch Studio</h2>
+            <h2 className="text-xl font-bold lowercase tracking-tight text-plops-ink">launch studio</h2>
             <p className="text-sm text-plops-ink/60">Create & trade tokens on the Robinhood Chain.</p>
           </div>
           <button
             type="button"
             onClick={close}
-            className="flex h-9 w-9 items-center justify-center rounded-full glass text-plops-ink/70 hover:text-plops-ink"
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-plops-edge text-plops-ink/70 hover:text-plops-ink"
           >
             ✕
           </button>
@@ -73,48 +73,48 @@ export default function LaunchTokenModal() {
 
         {/* controls */}
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-          <div className="inline-flex rounded-full bg-plops-surface/50 p-1">
+          <div className="inline-flex rounded-lg border border-plops-edge bg-plops-surface p-0.5">
             {(["create", "trade"] as const).map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
-                className={`rounded-full px-5 py-2 text-sm font-semibold capitalize transition-all ${
-                  tab === t ? "bg-dreamy text-[#0c1330] shadow-glow" : "text-plops-ink/60 hover:text-plops-ink"
+                className={`rounded-md px-5 py-1.5 text-sm font-semibold lowercase transition-colors ${
+                  tab === t ? "bg-plops-ink text-plops-page" : "text-plops-ink/55 hover:text-plops-ink"
                 }`}
               >
-                {t === "create" ? "Create" : "Trade"}
+                {t === "create" ? "create" : "trade"}
               </button>
             ))}
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="inline-flex rounded-full bg-plops-surface/50 p-1">
+            <div className="inline-flex rounded-lg border border-plops-edge bg-plops-surface p-0.5">
               {(Object.keys(CHAINS) as ChainKey[]).map((k) => (
                 <button
                   key={k}
                   type="button"
                   onClick={() => setChainKey(k)}
-                  className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                    chainKey === k ? "bg-plops-ink text-plops-surface" : "text-plops-ink/55 hover:text-plops-ink"
+                  className={`rounded-md px-3 py-1.5 text-xs font-semibold lowercase transition-colors ${
+                    chainKey === k ? "bg-plops-ink text-plops-page" : "text-plops-ink/55 hover:text-plops-ink"
                   }`}
                 >
-                  {CHAINS[k].short}
+                  {CHAINS[k].short.toLowerCase()}
                 </button>
               ))}
             </div>
             <button
               type="button"
               onClick={openModal}
-              className="chip !py-1.5 text-xs hover:!border-plops-blue/60"
+              className="chip !py-1.5 text-xs hover:border-plops-ink/40"
             >
               {connection ? (
                 <>
-                  <span className="h-2 w-2 rounded-full bg-plops-green" />
+                  <span className="h-2 w-2 rounded-full bg-plops-accent" />
                   {shortenAddress(connection.address)}
                 </>
               ) : (
-                "Connect wallet"
+                "connect wallet"
               )}
             </button>
           </div>

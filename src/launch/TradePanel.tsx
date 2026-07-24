@@ -185,7 +185,7 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
               key={t.address}
               type="button"
               onClick={() => selectToken(t.address)}
-              className={`chip !py-1 ${selected?.toLowerCase() === t.address.toLowerCase() ? "!border-plops-blue/70" : ""}`}
+              className={`chip !py-1 ${selected?.toLowerCase() === t.address.toLowerCase() ? "!border-plops-accent !text-plops-ink" : ""}`}
             >
               {t.imageURI ? (
                 <img src={t.imageURI} alt="" className="h-4 w-4 rounded-full object-cover" />
@@ -199,13 +199,17 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
       )}
 
       {loading && <p className="text-sm text-plops-ink/60">Loading token…</p>}
-      {loadError && <p className="rounded-xl bg-plops-pink/15 px-3 py-2 text-sm text-plops-pink">{loadError}</p>}
+      {loadError && (
+        <p className="rounded-lg border border-plops-down/40 bg-plops-down/10 px-3 py-2 text-sm text-plops-down">
+          {loadError}
+        </p>
+      )}
 
       {data && (
         <>
-          <div className="glass rounded-2xl p-4">
+          <div className="glass rounded-xl p-4">
             <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-plops-surface/60 text-2xl">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-plops-edge bg-plops-muted text-2xl">
                 {data.imageURI ? <img src={data.imageURI} alt="" className="h-full w-full object-cover" /> : "🪙"}
               </span>
               <div className="min-w-0">
@@ -233,8 +237,8 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
           </div>
 
           {/* trade box */}
-          <div className="glass rounded-2xl p-4">
-            <div className="mb-3 grid grid-cols-2 gap-1 rounded-full bg-plops-surface/50 p-1">
+          <div className="glass rounded-xl p-4">
+            <div className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-plops-edge bg-plops-muted p-1">
               {(["buy", "sell"] as const).map((s) => (
                 <button
                   key={s}
@@ -244,11 +248,11 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
                     setAmount("");
                     setQuote(null);
                   }}
-                  className={`rounded-full py-2 text-sm font-semibold capitalize transition-all ${
+                  className={`rounded-md py-2 text-sm font-semibold lowercase transition-colors ${
                     side === s
                       ? s === "buy"
-                        ? "bg-plops-green/90 text-[#0c1330]"
-                        : "bg-plops-pink/90 text-[#0c1330]"
+                        ? "bg-plops-up text-black"
+                        : "bg-plops-down text-white"
                       : "text-plops-ink/60 hover:text-plops-ink"
                   }`}
                 >
@@ -272,7 +276,7 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
                       key={p}
                       type="button"
                       onClick={() => setAmount(p)}
-                      className="rounded-full border border-plops-edge/50 bg-plops-surface/40 px-3 py-1 text-xs font-semibold text-plops-ink/70 hover:text-plops-ink"
+                      className="rounded-md border border-plops-edge bg-plops-muted px-3 py-1 text-xs font-semibold text-plops-ink/70 hover:text-plops-ink"
                     >
                       {p} ETH
                     </button>
@@ -282,7 +286,7 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
                       key={p.label}
                       type="button"
                       onClick={() => setSellPct(p.pct)}
-                      className="rounded-full border border-plops-edge/50 bg-plops-surface/40 px-3 py-1 text-xs font-semibold text-plops-ink/70 hover:text-plops-ink"
+                      className="rounded-md border border-plops-edge bg-plops-muted px-3 py-1 text-xs font-semibold text-plops-ink/70 hover:text-plops-ink"
                     >
                       {p.label}
                     </button>
@@ -296,7 +300,11 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
               </p>
             )}
 
-            {txError && <p className="mt-2 rounded-xl bg-plops-pink/15 px-3 py-2 text-sm text-plops-pink">{txError}</p>}
+            {txError && (
+              <p className="mt-2 rounded-lg border border-plops-down/40 bg-plops-down/10 px-3 py-2 text-sm text-plops-down">
+                {txError}
+              </p>
+            )}
             {txStatus && <p className="mt-2 text-sm text-plops-ink/60">{txStatus}</p>}
 
             <button
@@ -328,8 +336,8 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-plops-surface/50 px-3 py-2">
-      <p className="text-[11px] uppercase tracking-wide text-plops-ink/45">{label}</p>
+    <div className="rounded-lg border border-plops-edge bg-plops-muted px-3 py-2">
+      <p className="text-[11px] lowercase tracking-wide text-plops-ink/45">{label}</p>
       <p className="truncate text-sm font-semibold text-plops-ink">{value}</p>
     </div>
   );
@@ -350,7 +358,7 @@ function SocialRow({ twitter, telegram, website }: { twitter: string; telegram: 
           href={l.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="chip !py-1 text-xs hover:!border-plops-blue/60"
+          className="chip !py-1 text-xs hover:border-plops-ink/40"
         >
           {l.label} ↗
         </a>
