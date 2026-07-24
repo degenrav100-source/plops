@@ -12,16 +12,23 @@ export default {
           mint: "#a8f5d8",
           pink: "#ff9ecd",
           rose: "#ffc4e1",
+          // perpad terminal accents
+          accent: "#16c784",
+          up: "#16c784",
+          down: "#ea3943",
           // theme-aware tokens (driven by CSS vars in index.css)
           ink: "rgb(var(--plops-ink) / <alpha-value>)",
           surface: "rgb(var(--plops-surface) / <alpha-value>)",
           edge: "rgb(var(--plops-edge) / <alpha-value>)",
+          muted: "rgb(var(--plops-muted) / <alpha-value>)",
+          page: "rgb(var(--plops-page) / <alpha-value>)",
           night: "#070b1f",
         },
       },
       fontFamily: {
-        display: ['"Clash Display"', '"Space Grotesk"', "system-ui", "sans-serif"],
-        sans: ['"Space Grotesk"', "system-ui", "sans-serif"],
+        display: ['"JetBrains Mono"', "ui-monospace", "monospace"],
+        sans: ['"JetBrains Mono"', "ui-monospace", "monospace"],
+        mono: ['"JetBrains Mono"', "ui-monospace", "monospace"],
       },
       boxShadow: {
         glow: "0 0 40px -8px rgba(124, 216, 255, 0.55)",

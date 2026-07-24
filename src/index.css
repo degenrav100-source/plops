@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,19 +6,22 @@
 
 :root {
   color-scheme: light;
-  /* theme tokens (space-separated RGB for Tailwind alpha) */
-  --plops-ink: 12 19 48;
+  /* theme tokens (space-separated RGB for Tailwind alpha) — perpad terminal light */
+  --plops-ink: 17 17 19;
   --plops-surface: 255 255 255;
-  --plops-edge: 255 255 255;
-  --plops-page: #eaf3ff;
+  --plops-edge: 226 226 230;
+  --plops-page: 255 255 255;
+  --plops-muted: 250 250 251;
 }
 
 .dark {
   color-scheme: dark;
-  --plops-ink: 227 236 255;
-  --plops-surface: 44 56 102;
-  --plops-edge: 150 172 240;
-  --plops-page: #05060f;
+  /* perpad terminal dark */
+  --plops-ink: 233 233 238;
+  --plops-surface: 18 18 21;
+  --plops-edge: 39 39 45;
+  --plops-page: 10 10 11;
+  --plops-muted: 22 22 26;
 }
 
 html {
@@ -27,63 +30,74 @@ html {
 
 body {
   margin: 0;
-  font-family: "Space Grotesk", system-ui, sans-serif;
-  background-color: var(--plops-page);
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background-color: rgb(var(--plops-page));
   color: rgb(var(--plops-ink));
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
-  transition: background-color 0.4s ease, color 0.4s ease;
+  transition: background-color 0.25s ease, color 0.25s ease;
+  font-feature-settings: "tnum" 1;
 }
 
 @layer components {
+  /* flat terminal card (kept class name so existing usages restyle) */
   .glass {
-    @apply border border-plops-edge/60 bg-plops-surface/50 backdrop-blur-xl;
+    @apply border border-plops-edge bg-plops-surface;
   }
   .dark .glass {
-    @apply border-plops-edge/20 bg-plops-surface/25;
+    @apply border-plops-edge bg-plops-surface;
   }
   .glass-dark {
-    @apply border border-white/15 bg-white/10 backdrop-blur-xl;
+    @apply border border-plops-edge bg-plops-surface;
   }
   .text-gradient {
-    @apply bg-dreamy bg-clip-text text-transparent;
-    background-size: 200% 200%;
+    @apply text-plops-accent;
   }
+  /* primary CTA — solid green accent */
   .btn-primary {
-    @apply relative inline-flex items-center justify-center rounded-full bg-dreamy px-7 py-3 font-semibold text-[#0c1330] shadow-glow transition-all duration-300 hover:-translate-y-0.5 hover:shadow-glow-pink;
-    background-size: 200% 200%;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-plops-accent bg-plops-accent px-5 py-2.5 text-sm font-semibold lowercase tracking-tight text-black transition-colors duration-150 hover:bg-plops-accent/85;
   }
+  /* outlined / secondary — perpad connect-wallet style */
   .btn-ghost {
-    @apply inline-flex items-center justify-center rounded-full border border-plops-blue/30 bg-plops-surface/60 px-7 py-3 font-semibold text-plops-ink backdrop-blur-md transition-all duration-300 hover:border-plops-blue/60 hover:bg-plops-surface/80;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-plops-edge bg-transparent px-5 py-2.5 text-sm font-semibold lowercase tracking-tight text-plops-ink transition-colors duration-150 hover:border-plops-ink/40 hover:bg-plops-muted;
   }
   .dark .btn-ghost {
-    @apply bg-plops-surface/25 hover:bg-plops-surface/40;
+    @apply hover:bg-plops-muted;
   }
   .section {
-    @apply mx-auto w-full max-w-6xl px-6;
+    @apply mx-auto w-full max-w-7xl px-4;
   }
+  /* small mono tag */
   .chip {
-    @apply inline-flex items-center gap-2 rounded-full border border-plops-edge/60 bg-plops-surface/60 px-4 py-1.5 text-sm font-medium text-plops-ink/70 backdrop-blur-md;
+    @apply inline-flex items-center gap-1.5 rounded-md border border-plops-edge bg-plops-muted px-2.5 py-1 text-xs font-medium lowercase tracking-tight text-plops-ink/70;
   }
   .dark .chip {
-    @apply border-plops-edge/20 bg-plops-surface/25;
+    @apply border-plops-edge bg-plops-muted;
   }
   .plops-input {
-    @apply w-full rounded-xl border border-plops-edge/50 bg-plops-surface/50 px-3.5 py-2.5 text-sm text-plops-ink outline-none transition-colors placeholder:text-plops-ink/35 focus:border-plops-blue/70 focus:bg-plops-surface/70;
+    @apply w-full rounded-lg border border-plops-edge bg-plops-muted px-3 py-2.5 text-sm text-plops-ink outline-none transition-colors placeholder:text-plops-ink/35 focus:border-plops-accent;
   }
   .dark .plops-input {
-    @apply border-plops-edge/25 bg-plops-surface/25 focus:bg-plops-surface/40;
+    @apply border-plops-edge bg-plops-muted focus:border-plops-accent;
+  }
+  /* nav link */
+  .nav-link {
+    @apply rounded-md px-2.5 py-1.5 text-sm lowercase tracking-tight text-plops-ink/55 transition-colors hover:text-plops-ink;
   }
 }
 
-/* dreamy scrollbar */
+/* thin terminal scrollbar */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(#7cd8ff, #ff9ecd);
+  background: rgb(var(--plops-edge));
   border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--plops-ink) / 0.35);
 }

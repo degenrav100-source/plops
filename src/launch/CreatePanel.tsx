@@ -127,7 +127,7 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
     const deployedChain = CHAINS[deployed.chainKey];
     return (
       <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-dreamy text-3xl shadow-glow">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-plops-accent text-3xl">
           🎉
         </div>
         <h3 className="text-xl font-bold text-plops-ink">Token deployed!</h3>
@@ -203,7 +203,7 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-plops-edge/60 bg-plops-surface/40 text-xl"
+            className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed border-plops-edge bg-plops-muted text-xl"
           >
             {imagePreview ? (
               <img src={imagePreview} alt="preview" className="h-full w-full object-cover" />
@@ -276,10 +276,10 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
               key={p}
               type="button"
               onClick={() => setInitialBuy(p)}
-              className={`rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${
+              className={`rounded-md px-4 py-1.5 text-sm font-semibold transition-colors ${
                 initialBuy === p
-                  ? "bg-dreamy text-[#0c1330] shadow-glow"
-                  : "border border-plops-edge/50 bg-plops-surface/40 text-plops-ink/70 hover:text-plops-ink"
+                  ? "bg-plops-accent text-black"
+                  : "border border-plops-edge bg-plops-muted text-plops-ink/70 hover:text-plops-ink"
               }`}
             >
               {p} ETH
@@ -295,7 +295,11 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
         </div>
       </Field>
 
-      {error && <p className="rounded-xl bg-plops-pink/15 px-3 py-2 text-sm text-plops-pink">{error}</p>}
+      {error && (
+        <p className="rounded-lg border border-plops-down/40 bg-plops-down/10 px-3 py-2 text-sm text-plops-down">
+          {error}
+        </p>
+      )}
       {status && <p className="text-sm text-plops-ink/60">{status}</p>}
 
       <button type="button" onClick={deploy} disabled={busy} className="btn-primary w-full disabled:opacity-60">
