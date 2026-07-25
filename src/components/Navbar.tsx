@@ -37,6 +37,7 @@ export default function Navbar({ theme, toggleTheme }: Props) {
     const q = query.trim();
     if (!q) return;
     if (isAddress(q)) {
+      setOpen(false);
       openLaunch("trade", q);
     } else {
       goMarket();

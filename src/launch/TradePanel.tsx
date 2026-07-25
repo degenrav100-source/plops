@@ -42,6 +42,13 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
     setSaved(listTokens(chainKey));
   }, [chainKey]);
 
+  // The panel can mount before the parent has resolved the requested address.
+  useEffect(() => {
+    if (!initialAddress) return;
+    setAddressInput(initialAddress);
+    setSelected(initialAddress);
+  }, [initialAddress]);
+
   const load = useCallback(
     async (addr: string) => {
       setLoading(true);
