@@ -12,10 +12,17 @@ function WalletIcon() {
   );
 }
 
-export default function ConnectButton({ className = "" }: { className?: string }) {
+interface Props {
+  className?: string;
+  /** tighter padding + shortened label, for the mobile header */
+  compact?: boolean;
+}
+
+export default function ConnectButton({ className = "", compact = false }: Props) {
   const { connection, openModal, disconnect } = useWallet();
   const [menuOpen, setMenuOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const sizing = compact ? "px-3 py-2 text-xs" : "";
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -28,9 +35,9 @@ export default function ConnectButton({ className = "" }: { className?: string }
 
   if (!connection) {
     return (
-      <button type="button" onClick={openModal} className={`btn-ghost ${className}`}>
+      <button type="button" onClick={openModal} className={`btn-ghost ${sizing} ${className}`}>
         <WalletIcon />
-        connect wallet
+        {compact ? "connect" : "connect wallet"}
       </button>
     );
   }
@@ -40,7 +47,7 @@ export default function ConnectButton({ className = "" }: { className?: string }
       <button
         type="button"
         onClick={() => setMenuOpen((v) => !v)}
-        className="btn-ghost w-full"
+        className={`btn-ghost w-full ${sizing}`}
       >
         <img src={connection.walletIcon} alt="" className="h-4 w-4 rounded object-contain" />
         {shortenAddress(connection.address)}

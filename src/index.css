@@ -6,22 +6,22 @@
 
 :root {
   color-scheme: light;
-  /* theme tokens (space-separated RGB for Tailwind alpha) — perpad terminal light */
-  --plops-ink: 17 17 19;
+  /* terminal light, tinted towards the meadow scene */
+  --plops-ink: 16 25 19;
   --plops-surface: 255 255 255;
-  --plops-edge: 226 226 230;
-  --plops-page: 255 255 255;
-  --plops-muted: 250 250 251;
+  --plops-edge: 214 228 216;
+  --plops-page: 243 249 242;
+  --plops-muted: 240 247 240;
 }
 
 .dark {
   color-scheme: dark;
-  /* perpad terminal dark */
-  --plops-ink: 233 233 238;
-  --plops-surface: 18 18 21;
-  --plops-edge: 39 39 45;
-  --plops-page: 10 10 11;
-  --plops-muted: 22 22 26;
+  /* terminal dark, night version of the same scene */
+  --plops-ink: 230 240 232;
+  --plops-surface: 14 23 20;
+  --plops-edge: 33 50 43;
+  --plops-page: 7 14 12;
+  --plops-muted: 18 29 25;
 }
 
 html {

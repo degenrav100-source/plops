@@ -5,6 +5,7 @@ import { CHAINS, explorerToken, type ChainKey } from "../wallet/chains";
 import { readToken, type TokenData } from "../lib/token";
 import { listTokens, type StoredToken } from "../lib/registry";
 import { fmtEth, fmtTokens, shortAddr } from "../lib/format";
+import HeroBanner from "./HeroBanner";
 
 type Filter = "all" | "mine";
 
@@ -117,26 +118,7 @@ export default function Terminal() {
 
       {/* CENTER — hero + token table */}
       <main className="order-1 min-w-0 lg:order-2">
-        <section className="rounded-xl border border-plops-edge bg-plops-surface p-6 md:p-8">
-          <span className="text-xs uppercase tracking-wider text-plops-ink/45">
-            robinhood chain, non-custodial
-          </span>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-plops-ink md:text-4xl">
-            launch coins with a <em className="font-normal italic text-plops-accent">plop</em>.
-          </h1>
-          <p className="mt-3 max-w-xl text-sm text-plops-ink/60">
-            Deploy an OpenZeppelin token on a non-custodial bonding curve on the Robinhood Chain.
-            Every buy and sell settles on-chain — you always hold your own keys.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            <button type="button" onClick={() => openLaunch("create")} className="btn-primary">
-              create a token
-            </button>
-            <button type="button" onClick={() => openLaunch("trade")} className="btn-ghost">
-              trade on curve
-            </button>
-          </div>
-        </section>
+        <HeroBanner />
 
         {/* controls */}
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2">

@@ -6,6 +6,7 @@ import type { Theme } from "../hooks/useTheme";
 import { useLaunch } from "../launch/context";
 import { CHAINS } from "../wallet/chains";
 import { isAddress } from "../lib/format";
+import { goHome, navigate } from "../hooks/useHashRoute";
 
 interface Props {
   theme: Theme;
@@ -27,7 +28,11 @@ export default function Navbar({ theme, toggleTheme }: Props) {
   };
   const goMarket = () => {
     setOpen(false);
-    document.getElementById("tokens")?.scrollIntoView({ behavior: "smooth" });
+    goHome("tokens");
+  };
+  const goDocs = (section?: string) => {
+    setOpen(false);
+    navigate(section ? `#/docs/${section}` : "#/docs");
   };
 
   const explorer = `${CHAINS.mainnet.blockExplorerUrls[0]}`;
@@ -55,6 +60,12 @@ export default function Navbar({ theme, toggleTheme }: Props) {
       </button>
       <button type="button" onClick={goTrade} className="nav-link">
         trade
+      </button>
+      <button type="button" onClick={() => goDocs("deploy")} className="nav-link">
+        how to deploy
+      </button>
+      <button type="button" onClick={() => goDocs()} className="nav-link">
+        docs
       </button>
       <a href={explorer} target="_blank" rel="noopener noreferrer" className="nav-link">
         explorer
@@ -89,14 +100,15 @@ export default function Navbar({ theme, toggleTheme }: Props) {
 
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggle theme={theme} toggle={toggleTheme} />
-          <ConnectButton />
           <button type="button" onClick={goCreate} className="btn-primary">
             create
           </button>
+          <ConnectButton />
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
           <ThemeToggle theme={theme} toggle={toggleTheme} />
+          <ConnectButton compact />
           <button
             aria-label="Toggle menu"
             onClick={() => setOpen((v) => !v)}
@@ -118,8 +130,7 @@ export default function Navbar({ theme, toggleTheme }: Props) {
               className="plops-input text-xs"
             />
           </form>
-          <div className="mt-3 flex flex-col gap-2">
-            <ConnectButton className="w-full" />
+          <div className="mt-3">
             <button type="button" onClick={goCreate} className="btn-primary w-full">
               create token
             </button>
