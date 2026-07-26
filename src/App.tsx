@@ -1,7 +1,9 @@
 import Background from "./components/Background";
 import Navbar from "./components/Navbar";
 import { useTheme } from "./hooks/useTheme";
+import { useHashRoute } from "./hooks/useHashRoute";
 import Terminal from "./components/Terminal";
+import Docs from "./components/Docs";
 import Footer from "./components/Footer";
 import WalletModal from "./components/WalletModal";
 import { WalletProvider } from "./wallet/WalletProvider";
@@ -10,6 +12,7 @@ import { LaunchProvider } from "./launch/LaunchProvider";
 
 export default function App() {
   const { theme, toggle } = useTheme();
+  const { route, section } = useHashRoute();
   return (
     <ToastProvider>
       <WalletProvider>
@@ -18,7 +21,7 @@ export default function App() {
             <Background />
             <Navbar theme={theme} toggleTheme={toggle} />
             <main className="flex-1">
-              <Terminal />
+              {route === "docs" ? <Docs section={section} /> : <Terminal />}
             </main>
             <Footer />
             <WalletModal />
