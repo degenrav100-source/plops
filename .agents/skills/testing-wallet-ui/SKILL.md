@@ -54,10 +54,38 @@ await browser.close();
 Notes:
 - Match the mock's `rdns` (e.g. `io.metamask`) to a curated wallet in `src/wallet/wallets.ts` so the
   app shows that wallet's real bundled logo.
+- Return a chain id the app knows (`0x1237` mainnet / `0xb626` testnet) if you want the launch studio's
+  network tabs to follow the wallet; an unknown id leaves the selector on its default.
 - `context.addInitScript(...)` does **not** survive `browser.close()` over CDP — prefer `page.evaluate`
   on the live page, or keep the connection open if you need it on reload.
+- The injection is lost on every reload (e.g. after a theme-persistence `F5`), so **re-run the inject
+  script after each reload** before testing wallet-gated UI.
+- `localStorage["plops-last-wallet"]` makes the app eagerly reconnect as soon as the provider is
+  announced. If you want to see the wallet modal, click the address chip → `disconnect` first,
+  otherwise clicking the header button just opens the copy/disconnect dropdown.
 - After injecting, the modal's MetaMask entry changes from "Install" to a connectable state; clicking
   it connects and the navbar shows the shortened address.
+
+## Mobile-viewport testing without devtools
+Resize the real Chrome window instead of opening devtools (cleaner in a recording):
+
+```bash
+wmctrl -r :ACTIVE: -b remove,maximized_vert,maximized_horz
+xdotool getactivewindow windowsize 420 820
+# restore later:
+wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz
+```
+
+## Gotchas worth re-testing after UI changes
+- **Modal props vs. `useState` initial values.** `LaunchTokenModal` copies the requested token address
+  into state inside a `useEffect`, and `if (!isOpen) return null` unmounts its children — so a child
+  that does `useState(initialAddress ?? "")` mounts before the address arrives and silently ignores it.
+  `TradePanel` had this bug: opening trade from search or a table `trade` button left the address input
+  empty. Always assert the input is **prefilled and attempts a load**, not just that the tab switched.
+- **Mobile menu must close on every action.** Each mobile menu handler needs `setOpen(false)`; the
+  address branch of the search handler once missed it and the menu stayed expanded behind the modal.
+- Loading a non-plops address shows an ethers `BAD_DATA / could not decode result data` error. That is
+  the expected honest response and is useful proof that a real RPC read happened.
 
 ## Key UI paths
 - Header (nav, search, connect, create): `src/components/Navbar.tsx`
