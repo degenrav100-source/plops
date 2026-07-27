@@ -21,8 +21,11 @@ export interface WalletOption {
   id: string;
   name: string;
   icon: string;
-  rdns: string;
+  /** identifier persisted for eager reconnect: rdns for curated wallets */
+  key: string;
   installUrl: string;
+  /** universal link that reopens plops inside the wallet's own browser */
+  deepLinkUrl?: string;
   detected: boolean;
   provider?: Eip1193Provider;
 }
