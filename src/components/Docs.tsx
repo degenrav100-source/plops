@@ -150,8 +150,11 @@ export default function Docs({ section }: { section: string | null }) {
           <ol className="space-y-4">
             <Step n={1} title="connect a wallet">
               Use the <span className="text-plops-ink">connect wallet</span> button in the top-right
-              corner. plops discovers installed wallets with EIP-6963 (MetaMask, Coinbase Wallet, OKX,
-              Rainbow, Trust, Phantom) and never asks for a seed phrase or private key.
+              corner. plops discovers installed wallets with EIP-6963 — MetaMask, Coinbase Wallet,
+              OKX, Bitget, Trust, Phantom, Rainbow, Binance, Bybit, Rabby, Zerion, Uniswap, Brave,
+              SafePal, TokenPocket, OneKey, imToken, Core, Ctrl, Talisman and any other injected
+              wallet — and never asks for a seed phrase or private key. On a phone, picking a wallet
+              reopens plops inside that wallet's own browser.
             </Step>
             <Step n={2} title="fund it with ETH on the robinhood chain">
               You need a little ETH for gas, plus whatever you want to spend on the first buy. Start on{" "}

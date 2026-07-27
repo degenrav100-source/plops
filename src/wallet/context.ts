@@ -7,6 +7,8 @@ export interface WalletContextValue {
   wallets: WalletOption[];
   connectingId: string | null;
   error: string | null;
+  /** non-error feedback, e.g. handing the page over to a mobile wallet */
+  notice: string | null;
   isModalOpen: boolean;
   openModal: () => void;
   closeModal: () => void;

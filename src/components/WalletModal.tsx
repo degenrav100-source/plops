@@ -1,8 +1,30 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useWallet } from "../wallet/context";
 
+/** Brand logo that degrades to the wallet's initials instead of a broken-image icon. */
+function WalletIcon({ src, name }: { src: string; name: string }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [src]);
+  if (!src || failed) {
+    return (
+      <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-plops-edge bg-plops-surface text-xs font-bold uppercase text-plops-ink/70">
+        {name.slice(0, 2)}
+      </span>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={`${name} logo`}
+      onError={() => setFailed(true)}
+      className="h-10 w-10 rounded-lg object-contain"
+    />
+  );
+}
+
 export default function WalletModal() {
-  const { isModalOpen, closeModal, wallets, connect, connectingId, error } = useWallet();
+  const { isModalOpen, closeModal, wallets, connect, connectingId, error, notice } = useWallet();
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     if (!isModalOpen) return;
@@ -18,6 +40,10 @@ export default function WalletModal() {
   }, [isModalOpen, closeModal]);
 
   if (!isModalOpen) return null;
+
+  const term = query.trim().toLowerCase();
+  const visible = term ? wallets.filter((w) => w.name.toLowerCase().includes(term)) : wallets;
+  const installed = wallets.filter((w) => w.detected).length;
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
@@ -44,8 +70,18 @@ export default function WalletModal() {
           </button>
         </div>
 
-        <div className="mt-5 grid grid-cols-3 gap-2">
-          {wallets.map((w) => {
+        <label className="mt-4 flex items-center gap-2 rounded-lg border border-plops-edge bg-plops-muted px-3 py-2">
+          <span className="text-xs text-plops-ink/40">search</span>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={installed > 0 ? `${installed} detected on this device` : "metamask, bitget, okx…"}
+            className="w-full bg-transparent text-sm text-plops-ink outline-none placeholder:text-plops-ink/35"
+          />
+        </label>
+
+        <div className="mt-3 grid max-h-[46vh] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
+          {visible.map((w) => {
             const isConnecting = connectingId === w.id;
             return (
               <button
@@ -53,31 +89,38 @@ export default function WalletModal() {
                 type="button"
                 onClick={() => connect(w)}
                 disabled={isConnecting}
-                title={w.detected ? `Connect ${w.name}` : `Install ${w.name}`}
+                title={w.detected ? `Connect ${w.name}` : `Open ${w.name}`}
                 className="group relative flex flex-col items-center gap-2 rounded-lg border border-plops-edge bg-plops-muted p-3 text-center transition-colors hover:border-plops-ink/40 disabled:opacity-60"
               >
                 <span className="relative flex h-11 w-11 items-center justify-center">
-                  <img
-                    src={w.icon}
-                    alt={`${w.name} logo`}
-                    className="h-10 w-10 rounded-lg object-contain"
-                  />
+                  <WalletIcon src={w.icon} name={w.name} />
                   {isConnecting && (
                     <span className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/50">
                       <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
                     </span>
                   )}
                 </span>
-                <span className="w-full truncate text-[11px] font-semibold text-plops-ink/80">
+                <span className="w-full text-[11px] font-semibold leading-tight text-plops-ink/80">
                   {w.name}
                 </span>
-                {!w.detected && (
-                  <span className="text-[10px] font-medium lowercase text-plops-ink/40">install</span>
-                )}
+                <span className="text-[10px] font-medium lowercase text-plops-ink/40">
+                  {w.detected ? "detected" : "get"}
+                </span>
               </button>
             );
           })}
+          {visible.length === 0 && (
+            <p className="col-span-2 py-6 text-center text-sm text-plops-ink/50 sm:col-span-3">
+              no wallet matches “{query}”
+            </p>
+          )}
         </div>
+
+        {notice && (
+          <p className="mt-4 rounded-lg border border-plops-edge bg-plops-muted px-3 py-2 text-center text-sm text-plops-ink/70">
+            {notice}
+          </p>
+        )}
 
         {error && (
           <p className="mt-4 rounded-lg border border-plops-down/40 bg-plops-down/10 px-3 py-2 text-center text-sm text-plops-down">

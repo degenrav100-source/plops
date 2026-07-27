@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { WalletContext } from "./context";
-import { curatedWallets } from "./wallets";
+import { curatedWallets, isMobile } from "./wallets";
 import type { ChainConfig } from "./chains";
 import type {
   Eip1193Provider,
@@ -27,12 +27,60 @@ function asString(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+type FlaggedProvider = Eip1193Provider & Record<string, unknown>;
+
+/**
+ * Wallets that never announce themselves over EIP-6963 (mostly in-app mobile browsers) still
+ * inject `window.ethereum`, sometimes as a list of providers. Read them so those wallets connect.
+ */
+function legacyProviders(): FlaggedProvider[] {
+  const injected = (window as unknown as { ethereum?: FlaggedProvider }).ethereum;
+  if (!injected) return [];
+  const nested = injected.providers;
+  if (Array.isArray(nested)) return nested.filter((p): p is FlaggedProvider => Boolean(p));
+  return [injected];
+}
+
+/**
+ * Map injected providers to curated wallets by their vendor flag. Wallets with a specific flag are
+ * matched first because several of them also set `isMetaMask` to stay compatible with old dapps.
+ */
+function matchLegacy(providers: FlaggedProvider[]): Map<string, FlaggedProvider> {
+  const matches = new Map<string, FlaggedProvider>();
+  const taken = new Set<FlaggedProvider>();
+  const passes = [
+    curatedWallets.filter((w) => w.id !== "metamask"),
+    curatedWallets.filter((w) => w.id === "metamask"),
+  ];
+  for (const pass of passes) {
+    for (const wallet of pass) {
+      const hit = providers.find(
+        (p) => !taken.has(p) && wallet.flags.some((flag) => p[flag] === true),
+      );
+      if (!hit) continue;
+      matches.set(wallet.id, hit);
+      taken.add(hit);
+    }
+  }
+  return matches;
+}
+
+function connectErrorMessage(err: unknown, walletName: string): string {
+  const code = (err as ProviderRpcError)?.code;
+  if (code === 4001) return "Connection request rejected in your wallet";
+  if (code === -32002) return `${walletName} already has a pending request — open the wallet`;
+  const message = err instanceof Error ? err.message : "";
+  return message || `Could not connect to ${walletName}`;
+}
+
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [detected, setDetected] = useState<Eip6963ProviderDetail[]>([]);
   const [connection, setConnection] = useState<WalletConnection | null>(null);
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
+  const [legacyTick, setLegacyTick] = useState(0);
   const [activeProvider, setActiveProvider] = useState<Eip1193Provider | null>(null);
   const activeListeners = useRef<ActiveListeners | null>(null);
 
@@ -59,34 +107,64 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("eip6963:announceProvider", onAnnounce as EventListener);
   }, []);
 
+  // `window.ethereum` can be injected after React mounts, so re-read it for a few seconds.
+  useEffect(() => {
+    if (legacyProviders().length > 0) return;
+    let tries = 0;
+    const id = window.setInterval(() => {
+      tries += 1;
+      if (legacyProviders().length > 0) setLegacyTick((n) => n + 1);
+      if (tries >= 6 || legacyProviders().length > 0) window.clearInterval(id);
+    }, 500);
+    return () => window.clearInterval(id);
+  }, []);
+
   const wallets = useMemo<WalletOption[]>(() => {
-    const byRdns = new Map(detected.map((d) => [d.info.rdns, d]));
+    void legacyTick;
+    const pageUrl = window.location.href;
+    const announcedProviders = new Set(detected.map((d) => d.provider));
+    const legacyByWallet = matchLegacy(
+      legacyProviders().filter((p) => !announcedProviders.has(p)),
+    );
+    const claimed = new Set<string>();
+
     const curated: WalletOption[] = curatedWallets.map((w) => {
-      const match = byRdns.get(w.rdns);
+      const announced = detected.find(
+        (d) =>
+          w.rdns.includes(d.info.rdns) ||
+          d.info.name.toLowerCase().replace(/\s+/g, "") === w.name.toLowerCase().replace(/\s+/g, ""),
+      );
+      if (announced) claimed.add(announced.info.rdns);
+      const provider = announced?.provider ?? legacyByWallet.get(w.id);
       return {
         id: w.id,
         name: w.name,
         icon: w.icon,
-        rdns: w.rdns,
+        key: w.rdns[0],
         installUrl: w.installUrl,
-        detected: Boolean(match),
-        provider: match?.provider,
+        deepLinkUrl: w.deepLink?.(pageUrl),
+        detected: Boolean(provider),
+        provider,
       };
     });
-    const curatedRdns = new Set(curatedWallets.map((w) => w.rdns));
+
+    // Anything else that announced itself: show it with the icon the wallet provided.
     const extras: WalletOption[] = detected
-      .filter((d) => !curatedRdns.has(d.info.rdns))
+      .filter((d) => !claimed.has(d.info.rdns))
       .map((d) => ({
         id: d.info.rdns,
         name: d.info.name,
         icon: d.info.icon,
-        rdns: d.info.rdns,
+        key: d.info.rdns,
         installUrl: "",
         detected: true,
         provider: d.provider,
       }));
-    return [...curated, ...extras];
-  }, [detected]);
+
+    const all = [...curated, ...extras];
+    // Installed wallets first, everything else keeps its curated order.
+    return all.filter((w) => w.detected).concat(all.filter((w) => !w.detected));
+  }, [detected, legacyTick]);
 
   const applyAccounts = useCallback(
     (accounts: unknown, wallet: WalletOption, chainId: string) => {
@@ -128,10 +206,17 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     async (wallet: WalletOption) => {
       setError(null);
       if (!wallet.provider) {
-        if (wallet.installUrl) window.open(wallet.installUrl, "_blank", "noopener,noreferrer");
-        setError(`${wallet.name} is not installed`);
+        // On a phone the wallet lives in its own app: hand the page over to it.
+        const target = (isMobile() && wallet.deepLinkUrl) || wallet.installUrl;
+        if (target) window.open(target, "_blank", "noopener,noreferrer");
+        setNotice(
+          isMobile() && wallet.deepLinkUrl
+            ? `Opening plops in ${wallet.name}…`
+            : `${wallet.name} is not installed — opening its download page.`,
+        );
         return;
       }
+      setNotice(null);
       setConnectingId(wallet.id);
       try {
         const accounts = await wallet.provider.request({ method: "eth_requestAccounts" });
@@ -144,11 +229,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         applyAccounts(accounts, wallet, chainId);
         attachProvider(wallet.provider);
         setActiveProvider(wallet.provider);
-        window.localStorage.setItem(LAST_WALLET_KEY, wallet.rdns);
+        window.localStorage.setItem(LAST_WALLET_KEY, wallet.key);
         setModalOpen(false);
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to connect";
-        setError(message);
+        setError(connectErrorMessage(err, wallet.name));
       } finally {
         setConnectingId(null);
       }
@@ -161,7 +245,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (connection || detected.length === 0) return;
     const last = window.localStorage.getItem(LAST_WALLET_KEY);
     if (!last) return;
-    const wallet = wallets.find((w) => w.rdns === last && w.detected);
+    const wallet = wallets.find((w) => w.key === last && w.detected);
     if (!wallet?.provider) return;
     let cancelled = false;
     (async () => {
@@ -190,6 +274,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const disconnect = useCallback(() => {
     setConnection(null);
     setError(null);
+    setNotice(null);
     detachProvider();
     setActiveProvider(null);
     window.localStorage.removeItem(LAST_WALLET_KEY);
@@ -232,6 +317,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const openModal = useCallback(() => {
     setError(null);
+    setNotice(null);
     setModalOpen(true);
   }, []);
   const closeModal = useCallback(() => setModalOpen(false), []);
@@ -242,6 +328,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       wallets,
       connectingId,
       error,
+      notice,
       isModalOpen,
       openModal,
       closeModal,
@@ -255,6 +342,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       wallets,
       connectingId,
       error,
+      notice,
       isModalOpen,
       openModal,
       closeModal,

@@ -2,19 +2,18 @@ import AsciiPlops from "./AsciiPlops";
 import { useLaunch } from "../launch/context";
 import { navigate } from "../hooks/useHashRoute";
 
-const scene = `${import.meta.env.BASE_URL}scene.webp`;
+// Pre-desaturated so the banner needs no CSS filter: a filtered child escapes the card's
+// rounded overflow clip on some mobile browsers and bleeds over the page.
+const scene = `${import.meta.env.BASE_URL}scene-mono.webp`;
 
 export default function HeroBanner() {
   const { openLaunch } = useLaunch();
 
   return (
-    <section className="relative overflow-hidden rounded-xl border border-plops-edge">
-      <img
-        src={scene}
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover grayscale"
-      />
+    <section
+      className="relative isolate overflow-hidden rounded-xl border border-plops-edge bg-plops-page bg-cover bg-center"
+      style={{ backgroundImage: `url(${scene})` }}
+    >
       <div className="absolute inset-0 bg-gradient-to-r from-plops-page via-plops-page/90 to-plops-page/40" />
       <div className="absolute inset-0 bg-plops-page/40" />
 
@@ -50,7 +49,7 @@ export default function HeroBanner() {
         <AsciiPlops
           cols={46}
           rows={20}
-          className="justify-self-center text-plops-ink/85 md:justify-self-end"
+          className="max-w-full justify-self-center overflow-hidden text-plops-ink/85 md:justify-self-end"
           style={{ fontSize: "clamp(5.5px, 0.85vw, 11px)" }}
         />
       </div>
