@@ -115,9 +115,9 @@ export default function Docs({ section }: { section: string | null }) {
             build and trade on plops
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-plops-ink/65">
-            plops is a non-custodial launchpad on the Robinhood Chain. Every token is an OpenZeppelin
-            ERC-20 with a bonding curve baked in, deployed straight from your wallet — no backend
-            holds your keys, your tokens or your ETH.
+            plops turns an idea into a tradable coin in one transaction. Every token carries its own
+            market on the Robinhood Chain, and it all runs from your wallet — plops never holds your
+            keys, your tokens or your ETH.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <button type="button" onClick={() => openLaunch("create")} className="btn-primary">
@@ -149,39 +149,32 @@ export default function Docs({ section }: { section: string | null }) {
         <Section id="deploy" title="how to deploy a token">
           <ol className="space-y-4">
             <Step n={1} title="connect a wallet">
-              Use the <span className="text-plops-ink">connect wallet</span> button in the top-right
-              corner. plops discovers installed wallets with EIP-6963 — MetaMask, Coinbase Wallet,
-              OKX, Bitget, Trust, Phantom, Rainbow, Binance, Bybit, Rabby, Zerion, Uniswap, Brave,
-              SafePal, TokenPocket, OneKey, imToken, Core, Ctrl, Talisman and any other injected
-              wallet — and never asks for a seed phrase or private key. On a phone, picking a wallet
-              reopens plops inside that wallet's own browser.
+              Tap <span className="text-plops-ink">connect wallet</span> top-right. 21 wallets are
+              supported, plus any other injected one. Never a seed phrase.
             </Step>
-            <Step n={2} title="fund it with ETH on the robinhood chain">
-              You need a little ETH for gas, plus whatever you want to spend on the first buy. Start on{" "}
-              <span className="text-plops-ink">testnet</span> if this is your first launch.
+            <Step n={2} title="fund it with eth">
+              A little for gas, plus whatever you want to spend on the first buy. New here? Use{" "}
+              <span className="text-plops-ink">testnet</span>.
             </Step>
-            <Step n={3} title="open the launch studio → create">
-              Press <span className="text-plops-ink">create</span> in the header. Fill in the token
-              name, symbol and description, then add an image URL (or upload a file if you have a
-              Pinata JWT configured) and your socials. All of it is written on-chain with the token.
+            <Step n={3} title="fill in the coin">
+              <span className="text-plops-ink">create</span> → name, ticker, pitch, image, socials.
+              All of it is stored on-chain.
             </Step>
-            <Step n={4} title="pick your initial buy">
-              Choose one of the presets — 0.1, 0.05, 0.035 or 0.025 ETH — or type a custom amount.
-              This ETH is sent with the deployment and buys your own tokens on the curve immediately,
-              so you are the first holder.
+            <Step n={4} title="pick your first buy">
+              0.1, 0.05, 0.035, 0.025 ETH or a custom amount — it buys on the curve at launch, so you
+              are holder #1. Optional.
             </Step>
-            <Step n={5} title="confirm in your wallet">
-              plops asks the wallet to add / switch to the Robinhood Chain if needed, then sends the
-              deployment transaction. You sign it — plops cannot sign anything for you.
+            <Step n={5} title="sign it">
+              plops switches the network if needed; you sign the launch. One transaction, no approval
+              step.
             </Step>
-            <Step n={6} title="share the contract">
-              When the transaction confirms you get the contract address and an explorer link. Anyone
-              can paste that address into the header search or the{" "}
-              <span className="text-plops-ink">trade</span> tab to buy and sell on the curve.
+            <Step n={6} title="share the address">
+              You get the contract address and an explorer link. Anyone can paste it into search or{" "}
+              <span className="text-plops-ink">trade</span> and start buying.
             </Step>
           </ol>
           <p className="text-xs text-plops-ink/50">
-            Deployment costs gas on the network you selected. Nothing is charged by plops itself.
+            You pay gas on the selected network. plops charges nothing.
           </p>
           <div className="flex flex-wrap gap-2 pt-1">
             <button type="button" onClick={() => openLaunch("create")} className="btn-primary">

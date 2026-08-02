@@ -5,7 +5,7 @@ import { useToast } from "../toast/context";
 import { CHAINS, explorerToken, type ChainKey } from "../wallet/chains";
 import { buyToken, quoteBuy, quoteSell, readToken, sellToken, type TokenData } from "../lib/token";
 import { listTokens, type StoredToken } from "../lib/registry";
-import { fmtEth, fmtTokens, isAddress, shortAddr } from "../lib/format";
+import { fmtEth, fmtTokens, isAddress, shortAddr, toExternalUrl } from "../lib/format";
 
 const BUY_PRESETS = ["0.1", "0.05", "0.035", "0.025"];
 const SELL_PRESETS: { label: string; pct: bigint }[] = [
@@ -362,7 +362,7 @@ function SocialRow({ twitter, telegram, website }: { twitter: string; telegram: 
       {links.map((l) => (
         <a
           key={l.label}
-          href={l.url}
+          href={toExternalUrl(l.url)}
           target="_blank"
           rel="noopener noreferrer"
           className="chip !py-1 text-xs hover:border-plops-ink/40"

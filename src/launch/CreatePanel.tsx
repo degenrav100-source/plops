@@ -6,6 +6,7 @@ import { CHAINS, explorerToken, explorerTx, type ChainKey } from "../wallet/chai
 import { deployToken } from "../lib/token";
 import { addToken } from "../lib/registry";
 import { getPinataJwt, hasPinataJwt, setPinataJwt, uploadImageToIpfs } from "../lib/ipfs";
+import { toExternalUrl } from "../lib/format";
 
 const BUY_PRESETS = ["0.1", "0.05", "0.035", "0.025"];
 
@@ -71,7 +72,7 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
       return;
     }
     if (!name.trim() || !symbol.trim()) {
-      setError("Name and symbol are required.");
+      setError("Give your coin a name and a ticker first.");
       return;
     }
     let buyWei = 0n;
@@ -79,7 +80,7 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
       try {
         buyWei = parseEther(initialBuy.trim());
       } catch {
-        setError("Invalid initial buy amount.");
+        setError("That first-buy amount is not a valid number of ETH.");
         return;
       }
     }
@@ -88,7 +89,7 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
       setStatus(`Switching to ${chain.chainName}…`);
       await switchChain(chain);
       const imageURI = await resolveImageUri();
-      setStatus("Confirm the deploy in your wallet…");
+      setStatus("Confirm the launch in your wallet…");
       const res = await deployToken(
         activeProvider,
         {
@@ -96,9 +97,9 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
           symbol: symbol.trim().toUpperCase(),
           description: description.trim(),
           imageURI,
-          twitter: twitter.trim(),
-          telegram: telegram.trim(),
-          website: website.trim(),
+          twitter: toExternalUrl(twitter),
+          telegram: toExternalUrl(telegram),
+          website: toExternalUrl(website),
         },
         buyWei,
       );
@@ -130,9 +131,9 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-plops-accent text-3xl">
           🎉
         </div>
-        <h3 className="text-xl font-bold text-plops-ink">Token deployed!</h3>
+        <h3 className="text-xl font-bold text-plops-ink">Your coin is live.</h3>
         <p className="mt-1 text-sm text-plops-ink/60">
-          {name} (${symbol.toUpperCase()}) is live on {deployedChain.chainName}.
+          {name} (${symbol.toUpperCase()}) is trading on the curve on {deployedChain.chainName}.
         </p>
         <div className="mt-5 flex flex-col gap-2">
           <a
@@ -168,37 +169,37 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
   return (
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Token name">
+        <Field label="Token name" hint="shown everywhere, on-chain">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Bubble Finance"
+            placeholder="e.g. Plop Machine"
             className="plops-input"
             maxLength={40}
           />
         </Field>
-        <Field label="Symbol / ticker">
+        <Field label="Ticker" hint="3–6 letters, no $">
           <input
             value={symbol}
             onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-            placeholder="BUBL"
+            placeholder="PLOP"
             className="plops-input uppercase"
             maxLength={11}
           />
         </Field>
       </div>
 
-      <Field label="Description">
+      <Field label="Pitch" hint="one or two lines, stored on-chain">
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="A dreamy community token launching on the Robinhood Chain."
+          placeholder="What is this coin and why should anyone hold it?"
           className="plops-input min-h-[72px] resize-y"
           maxLength={280}
         />
       </Field>
 
-      <Field label="Token image">
+      <Field label="Token image" hint="square png/jpg looks best">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -222,7 +223,7 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
             <input
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="…or paste an image URL (ipfs:// or https://)"
+              placeholder="…or paste an image link (ipfs:// or https://)"
               className="plops-input"
             />
             <button
@@ -258,18 +259,18 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Field label="Twitter / X">
-          <input value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="https://x.com/…" className="plops-input" />
+        <Field label="Twitter / X" hint="optional">
+          <input value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="x.com/yourproject" className="plops-input" />
         </Field>
-        <Field label="Telegram">
-          <input value={telegram} onChange={(e) => setTelegram(e.target.value)} placeholder="https://t.me/…" className="plops-input" />
+        <Field label="Telegram" hint="optional">
+          <input value={telegram} onChange={(e) => setTelegram(e.target.value)} placeholder="t.me/yourproject" className="plops-input" />
         </Field>
-        <Field label="Website">
-          <input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://…" className="plops-input" />
+        <Field label="Website" hint="optional">
+          <input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="yourproject.xyz" className="plops-input" />
         </Field>
       </div>
 
-      <Field label="Initial buy (optional) — ETH to swap for your token at launch">
+      <Field label="First buy" hint="ETH you spend on the curve at launch — optional">
         <div className="flex flex-wrap items-center gap-2">
           {BUY_PRESETS.map((p) => (
             <button
@@ -303,20 +304,24 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
       {status && <p className="text-sm text-plops-ink/60">{status}</p>}
 
       <button type="button" onClick={deploy} disabled={busy} className="btn-primary w-full disabled:opacity-60">
-        {busy ? "Working…" : connection ? `Deploy token on ${chain.short}` : "Connect wallet to deploy"}
+        {busy ? "Launching…" : connection ? `Launch on ${chain.short}` : "Connect wallet to launch"}
       </button>
       <p className="text-center text-xs text-plops-ink/45">
-        Non-custodial · OpenZeppelin ERC-20 + bonding curve · you pay only gas on {chain.chainName}
+        Fair launch · liquidity locked in the curve · plops takes no cut — you pay only gas on{" "}
+        {chain.chainName}
       </p>
     </div>
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-plops-ink/55">
-        {label}
+      <span className="mb-1 flex flex-wrap items-baseline gap-x-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-plops-ink/55">
+          {label}
+        </span>
+        {hint && <span className="text-[11px] lowercase text-plops-ink/40">{hint}</span>}
       </span>
       {children}
     </label>

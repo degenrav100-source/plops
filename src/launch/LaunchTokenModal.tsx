@@ -60,7 +60,9 @@ export default function LaunchTokenModal() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold lowercase tracking-tight text-plops-ink">launch studio</h2>
-            <p className="text-sm text-plops-ink/60">Create & trade tokens on the Robinhood Chain.</p>
+            <p className="text-sm text-plops-ink/60">
+              Launch a coin in one transaction, or trade any plop on its curve.
+            </p>
           </div>
           <button
             type="button"

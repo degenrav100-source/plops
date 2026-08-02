@@ -23,3 +23,10 @@ export function shortAddr(address: string): string {
 export function isAddress(value: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(value.trim());
 }
+
+/** Social links are typed without a scheme ("x.com/plops"); without one an anchor resolves relatively. */
+export function toExternalUrl(value: string): string {
+  const url = value.trim();
+  if (!url) return "";
+  return /^[a-z][a-z0-9+.-]*:/i.test(url) ? url : `https://${url}`;
+}
