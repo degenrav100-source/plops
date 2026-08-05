@@ -24,9 +24,15 @@ export function isAddress(value: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(value.trim());
 }
 
-/** Social links are typed without a scheme ("x.com/plops"); without one an anchor resolves relatively. */
+/**
+ * Socials are typed without a scheme ("x.com/plops") and an anchor would resolve those relatively.
+ * Token metadata is attacker-controlled, so anything that is not http(s) — `javascript:`, `data:` —
+ * is dropped rather than linked.
+ */
 export function toExternalUrl(value: string): string {
   const url = value.trim();
   if (!url) return "";
-  return /^[a-z][a-z0-9+.-]*:/i.test(url) ? url : `https://${url}`;
+  const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(url)?.[1].toLowerCase();
+  if (!scheme) return `https://${url}`;
+  return scheme === "https" || scheme === "http" ? url : "";
 }

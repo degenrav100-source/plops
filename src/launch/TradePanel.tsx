@@ -352,9 +352,9 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function SocialRow({ twitter, telegram, website }: { twitter: string; telegram: string; website: string }) {
   const links = [
-    { url: twitter, label: "Twitter" },
-    { url: telegram, label: "Telegram" },
-    { url: website, label: "Website" },
+    { url: toExternalUrl(twitter), label: "Twitter" },
+    { url: toExternalUrl(telegram), label: "Telegram" },
+    { url: toExternalUrl(website), label: "Website" },
   ].filter((l) => l.url);
   if (links.length === 0) return null;
   return (
@@ -362,7 +362,7 @@ function SocialRow({ twitter, telegram, website }: { twitter: string; telegram: 
       {links.map((l) => (
         <a
           key={l.label}
-          href={toExternalUrl(l.url)}
+          href={l.url}
           target="_blank"
           rel="noopener noreferrer"
           className="chip !py-1 text-xs hover:border-plops-ink/40"
