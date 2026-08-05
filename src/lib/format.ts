@@ -23,3 +23,16 @@ export function shortAddr(address: string): string {
 export function isAddress(value: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(value.trim());
 }
+
+/**
+ * Socials are typed without a scheme ("x.com/plops") and an anchor would resolve those relatively.
+ * Token metadata is attacker-controlled, so anything that is not http(s) — `javascript:`, `data:` —
+ * is dropped rather than linked.
+ */
+export function toExternalUrl(value: string): string {
+  const url = value.trim();
+  if (!url) return "";
+  const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(url)?.[1].toLowerCase();
+  if (!scheme) return `https://${url}`;
+  return scheme === "https" || scheme === "http" ? url : "";
+}

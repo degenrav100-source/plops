@@ -5,7 +5,7 @@ import { useToast } from "../toast/context";
 import { CHAINS, explorerToken, type ChainKey } from "../wallet/chains";
 import { buyToken, quoteBuy, quoteSell, readToken, sellToken, type TokenData } from "../lib/token";
 import { listTokens, type StoredToken } from "../lib/registry";
-import { fmtEth, fmtTokens, isAddress, shortAddr } from "../lib/format";
+import { fmtEth, fmtTokens, isAddress, shortAddr, toExternalUrl } from "../lib/format";
 
 const BUY_PRESETS = ["0.1", "0.05", "0.035", "0.025"];
 const SELL_PRESETS: { label: string; pct: bigint }[] = [
@@ -352,9 +352,9 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function SocialRow({ twitter, telegram, website }: { twitter: string; telegram: string; website: string }) {
   const links = [
-    { url: twitter, label: "Twitter" },
-    { url: telegram, label: "Telegram" },
-    { url: website, label: "Website" },
+    { url: toExternalUrl(twitter), label: "Twitter" },
+    { url: toExternalUrl(telegram), label: "Telegram" },
+    { url: toExternalUrl(website), label: "Website" },
   ].filter((l) => l.url);
   if (links.length === 0) return null;
   return (
