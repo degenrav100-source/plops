@@ -6,6 +6,7 @@ import { readToken, type TokenData } from "../lib/token";
 import { listTokens, type StoredToken } from "../lib/registry";
 import { fmtEth, fmtTokens, shortAddr } from "../lib/format";
 import HeroBanner from "./HeroBanner";
+import DocsCallout from "./DocsCallout";
 
 type Filter = "all" | "mine";
 
@@ -119,6 +120,7 @@ export default function Terminal() {
       {/* CENTER — hero + token table */}
       <main className="order-1 min-w-0 lg:order-2">
         <HeroBanner />
+        <DocsCallout />
 
         {/* controls */}
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
