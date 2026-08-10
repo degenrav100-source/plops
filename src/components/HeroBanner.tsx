@@ -14,10 +14,12 @@ export default function HeroBanner() {
       className="relative isolate overflow-hidden rounded-xl border border-plops-edge bg-plops-page bg-cover bg-center"
       style={{ backgroundImage: `url(${scene})` }}
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-plops-page via-plops-page/90 to-plops-page/40" />
-      <div className="absolute inset-0 bg-plops-page/40" />
+      <div className="absolute inset-0 bg-gradient-to-r from-plops-page via-plops-page/88 to-plops-page/45" />
+      {/* fades the photo into the card top and bottom so the banner reads as one surface */}
+      <div className="absolute inset-0 bg-gradient-to-b from-plops-page/60 via-transparent to-plops-page/95" />
+      <div className="absolute inset-0 bg-plops-page/25" />
 
-      <div className="relative grid items-center gap-4 p-6 md:grid-cols-[minmax(0,1fr)_auto] md:p-8">
+      <div className="relative grid items-center gap-6 p-6 md:grid-cols-[minmax(0,1fr)_auto] md:p-8">
         <div>
           <span className="text-xs uppercase tracking-wider text-plops-ink/55">
             robinhood chain · fair launch · your keys
@@ -51,12 +53,21 @@ export default function HeroBanner() {
           </div>
         </div>
 
-        <AsciiPlops
-          cols={46}
-          rows={20}
-          className="max-w-full justify-self-center overflow-hidden text-plops-ink/85 md:justify-self-end"
-          style={{ fontSize: "clamp(5.5px, 0.85vw, 11px)" }}
-        />
+        {/* the spinning mark gets its own dark stage so it always reads as clean white
+            and never sits half-cropped on top of the photo */}
+        <div className="justify-self-center md:justify-self-end">
+          <div className="relative flex h-44 w-44 items-center justify-center overflow-hidden rounded-2xl border border-white/12 bg-black/75 sm:h-52 sm:w-52 md:h-56 md:w-56">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.12),transparent_68%)]" />
+            <AsciiPlops
+              cols={30}
+              rows={15}
+              className="relative text-[8.5px] text-white sm:text-[10px] md:text-[11px]"
+            />
+          </div>
+          <span className="mt-2 block text-center text-[10px] uppercase tracking-[0.3em] text-plops-ink/40">
+            plops
+          </span>
+        </div>
       </div>
     </section>
   );
