@@ -6,6 +6,7 @@ import Terminal from "./components/Terminal";
 import Docs from "./components/Docs";
 import Footer from "./components/Footer";
 import WalletModal from "./components/WalletModal";
+import WelcomeGate from "./components/WelcomeGate";
 import { WalletProvider } from "./wallet/WalletProvider";
 import { ToastProvider } from "./toast/ToastProvider";
 import { LaunchProvider } from "./launch/LaunchProvider";
@@ -25,6 +26,7 @@ export default function App() {
             </main>
             <Footer />
             <WalletModal />
+            <WelcomeGate />
           </div>
         </LaunchProvider>
       </WalletProvider>

@@ -53,15 +53,16 @@ export default function HeroBanner() {
           </div>
         </div>
 
-        {/* the spinning mark gets its own dark stage so it always reads as clean white
-            and never sits half-cropped on top of the photo */}
+        {/* the mark sits straight on the banner — no panel behind it — and takes the theme
+            colour: white on dark, black on light. The soft page-coloured halo only keeps the
+            photo from eating the thin glyphs. */}
         <div className="justify-self-center md:justify-self-end">
-          <div className="relative flex h-44 w-44 items-center justify-center overflow-hidden rounded-2xl border border-white/12 bg-black/75 sm:h-52 sm:w-52 md:h-56 md:w-56">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.12),transparent_68%)]" />
+          <div className="relative flex h-44 w-44 items-center justify-center sm:h-52 sm:w-52 md:h-56 md:w-56">
+            <div className="pointer-events-none absolute -inset-4 bg-[radial-gradient(circle_at_50%_45%,rgb(var(--plops-page))_0%,rgb(var(--plops-page))_42%,rgb(var(--plops-page)/0.72)_62%,transparent_80%)]" />
             <AsciiPlops
               cols={30}
               rows={15}
-              className="relative text-[8.5px] text-white sm:text-[10px] md:text-[11px]"
+              className="relative text-[8.5px] text-plops-ink sm:text-[10px] md:text-[11px]"
             />
           </div>
           <span className="mt-2 block text-center text-[10px] uppercase tracking-[0.3em] text-plops-ink/40">
