@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 import ConnectButton from "./ConnectButton";
@@ -17,6 +17,14 @@ export default function Navbar({ theme, toggleTheme }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const { openLaunch } = useLaunch();
+
+  useEffect(() => {
+    if (!open) return;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
   const goCreate = () => {
     setOpen(false);
@@ -74,53 +82,59 @@ export default function Navbar({ theme, toggleTheme }: Props) {
   );
 
   return (
-    <header className="sticky top-0 z-50 border-b border-plops-edge bg-plops-page/90 backdrop-blur-md">
-      <div className="section flex h-14 items-center justify-between gap-4">
-        <div className="flex items-center gap-5">
-          <Logo />
-          <nav className="hidden items-center gap-1 md:flex">{navItems}</nav>
-        </div>
-
-        <form onSubmit={onSearch} className="hidden max-w-xs flex-1 lg:block">
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-plops-ink/40">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <circle cx="11" cy="11" r="7" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
-            </span>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="search ticker, name or contract"
-              className="w-full rounded-lg border border-plops-edge bg-plops-muted py-2 pl-9 pr-3 text-xs text-plops-ink outline-none transition-colors placeholder:text-plops-ink/35 focus:border-plops-accent"
-            />
+    <>
+      <header className="sticky top-0 z-50 border-b border-plops-edge bg-plops-page/90 backdrop-blur-md">
+        <div className="section flex h-14 items-center justify-between gap-4">
+          <div className="flex items-center gap-5">
+            <Logo />
+            <nav className="hidden items-center gap-1 md:flex">{navItems}</nav>
           </div>
-        </form>
 
-        <div className="hidden items-center gap-2 md:flex">
-          <ThemeToggle theme={theme} toggle={toggleTheme} />
-          <button type="button" onClick={goCreate} className="btn-primary">
-            create
-          </button>
-          <ConnectButton />
+          <form onSubmit={onSearch} className="hidden max-w-xs flex-1 lg:block">
+            <div className="relative">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-plops-ink/40">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+              </span>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="search ticker, name or contract"
+                className="w-full rounded-lg border border-plops-edge bg-plops-muted py-2 pl-9 pr-3 text-xs text-plops-ink outline-none transition-colors placeholder:text-plops-ink/35 focus:border-plops-accent"
+              />
+            </div>
+          </form>
+
+          <div className="hidden items-center gap-2 md:flex">
+            <ThemeToggle theme={theme} toggle={toggleTheme} />
+            <button type="button" onClick={goCreate} className="btn-primary">
+              create
+            </button>
+            <ConnectButton />
+          </div>
+
+          <div className="flex items-center gap-2 md:hidden">
+            <ThemeToggle theme={theme} toggle={toggleTheme} />
+            <ConnectButton compact />
+            <button
+              aria-label="Toggle menu"
+              onClick={() => setOpen((v) => !v)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-plops-edge text-plops-ink"
+            >
+              <span className="text-lg leading-none">{open ? "\u2715" : "\u2630"}</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 md:hidden">
-          <ThemeToggle theme={theme} toggle={toggleTheme} />
-          <ConnectButton compact />
-          <button
-            aria-label="Toggle menu"
-            onClick={() => setOpen((v) => !v)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-plops-edge text-plops-ink"
-          >
-            <span className="text-lg leading-none">{open ? "\u2715" : "\u2630"}</span>
-          </button>
-        </div>
-      </div>
+      </header>
 
+      {/* Full-height opaque sheet, rendered outside the header: the header's backdrop-blur
+          makes it a containing block that would collapse a fixed child, and a shorter panel
+          lets the hero card show through the open menu. */}
       {open && (
-        <div className="border-t border-plops-edge bg-plops-surface px-4 py-3 md:hidden">
+        <div className="fixed inset-x-0 bottom-0 top-14 z-40 overflow-y-auto border-t border-plops-edge bg-plops-page px-4 py-3 md:hidden">
           <nav className="flex flex-col items-start gap-1 [&>*]:w-full [&>*]:text-left">{navItems}</nav>
           <form onSubmit={onSearch} className="mt-3">
             <input
@@ -137,6 +151,6 @@ export default function Navbar({ theme, toggleTheme }: Props) {
           </div>
         </div>
       )}
-    </header>
+    </>
   );
 }
