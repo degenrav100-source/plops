@@ -4,6 +4,7 @@ import { useTheme } from "./hooks/useTheme";
 import { useHashRoute } from "./hooks/useHashRoute";
 import Terminal from "./components/Terminal";
 import Docs from "./components/Docs";
+import FactorySetup from "./components/FactorySetup";
 import Footer from "./components/Footer";
 import WalletModal from "./components/WalletModal";
 import WelcomeGate from "./components/WelcomeGate";
@@ -22,7 +23,13 @@ export default function App() {
             <Background />
             <Navbar theme={theme} toggleTheme={toggle} />
             <main className="flex-1">
-              {route === "docs" ? <Docs section={section} /> : <Terminal />}
+              {route === "docs" ? (
+                <Docs section={section} />
+              ) : route === "factory" ? (
+                <FactorySetup />
+              ) : (
+                <Terminal />
+              )}
             </main>
             <Footer />
             <WalletModal />

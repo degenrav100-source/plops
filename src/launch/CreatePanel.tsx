@@ -3,7 +3,7 @@ import { parseEther } from "ethers";
 import { useWallet } from "../wallet/context";
 import { useToast } from "../toast/context";
 import { CHAINS, explorerToken, explorerTx, type ChainKey } from "../wallet/chains";
-import { deployToken } from "../lib/token";
+import { launchToken } from "../lib/factory";
 import { addToken } from "../lib/registry";
 import { getPinataJwt, hasPinataJwt, setPinataJwt, uploadImageToIpfs } from "../lib/ipfs";
 import { toExternalUrl } from "../lib/format";
@@ -90,8 +90,9 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
       await switchChain(chain);
       const imageURI = await resolveImageUri();
       setStatus("Confirm the launch in your wallet…");
-      const res = await deployToken(
+      const res = await launchToken(
         activeProvider,
+        chain,
         {
           name: name.trim(),
           symbol: symbol.trim().toUpperCase(),

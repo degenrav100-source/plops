@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export type Route = "app" | "docs";
+export type Route = "app" | "docs" | "factory";
 
 export interface RouteState {
   route: Route;
@@ -10,6 +10,7 @@ export interface RouteState {
 
 function parse(): RouteState {
   const hash = window.location.hash;
+  if (hash.startsWith("#/factory")) return { route: "factory", section: null };
   if (!hash.startsWith("#/docs")) return { route: "app", section: null };
   const section = hash.slice("#/docs".length).replace(/^\//, "");
   return { route: "docs", section: section || null };
@@ -37,7 +38,7 @@ export function navigate(hash: string) {
 
 /** Go back to the launchpad and scroll to a section of it. */
 export function goHome(elementId?: string) {
-  if (window.location.hash.startsWith("#/docs")) {
+  if (window.location.hash.startsWith("#/") && window.location.hash !== "#/") {
     navigate("#/");
     if (elementId) {
       // the launchpad mounts on the next render, so wait for it before scrolling
