@@ -124,6 +124,23 @@ export async function readToken(
   };
 }
 
+export interface TokenBrief {
+  address: string;
+  symbol: string;
+  imageURI: string;
+}
+
+/** Just enough to render a token chip — two calls instead of the thirteen `readToken` makes. */
+export async function readTokenBrief(chain: ChainConfig, address: string): Promise<TokenBrief> {
+  const rpc = new JsonRpcProvider(chain.rpcUrls[0], chain.chainIdDec);
+  const c = new Contract(address, PLOPS_TOKEN_ABI, rpc);
+  const [symbol, imageURI] = await Promise.all([
+    c.symbol() as Promise<string>,
+    c.imageURI() as Promise<string>,
+  ]);
+  return { address, symbol, imageURI };
+}
+
 export async function quoteBuy(
   chain: ChainConfig,
   address: string,

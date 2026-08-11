@@ -3,8 +3,18 @@ import { formatEther, parseEther } from "ethers";
 import { useWallet } from "../wallet/context";
 import { useToast } from "../toast/context";
 import { CHAINS, explorerToken, type ChainKey } from "../wallet/chains";
-import { buyToken, quoteBuy, quoteSell, readToken, sellToken, type TokenData } from "../lib/token";
-import { listTokens, type StoredToken } from "../lib/registry";
+import {
+  buyToken,
+  quoteBuy,
+  quoteSell,
+  readToken,
+  readTokenBrief,
+  sellToken,
+  type TokenBrief,
+  type TokenData,
+} from "../lib/token";
+import { listTokens } from "../lib/registry";
+import { listLaunchedTokens } from "../lib/factory";
 import { fmtEth, fmtTokens, isAddress, shortAddr, toExternalUrl } from "../lib/format";
 
 const BUY_PRESETS = ["0.1", "0.05", "0.035", "0.025"];
@@ -24,7 +34,7 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
   const { notify } = useToast();
   const chain = CHAINS[chainKey];
 
-  const [saved, setSaved] = useState<StoredToken[]>([]);
+  const [saved, setSaved] = useState<TokenBrief[]>([]);
   const [addressInput, setAddressInput] = useState(initialAddress ?? "");
   const [selected, setSelected] = useState<string | null>(initialAddress);
   const [data, setData] = useState<TokenData | null>(null);
@@ -38,9 +48,34 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
   const [txStatus, setTxStatus] = useState("");
   const [txError, setTxError] = useState("");
 
+  // Quick picks: what this browser launched, plus the newest launches from the global index.
   useEffect(() => {
-    setSaved(listTokens(chainKey));
-  }, [chainKey]);
+    let cancelled = false;
+    const local: TokenBrief[] = listTokens(chainKey).map((t) => ({
+      address: t.address,
+      symbol: t.symbol,
+      imageURI: t.imageURI,
+    }));
+    setSaved(local);
+    (async () => {
+      try {
+        const indexed = await listLaunchedTokens(chain, 12);
+        const known = new Set(local.map((t) => t.address.toLowerCase()));
+        const extra = await Promise.all(
+          indexed
+            .filter((a) => !known.has(a.toLowerCase()))
+            .map((a) => readTokenBrief(chain, a).catch(() => null)),
+        );
+        if (cancelled) return;
+        setSaved([...local, ...extra.filter((t): t is TokenBrief => t !== null)]);
+      } catch {
+        /* no index on this chain yet — local picks only */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [chainKey, chain]);
 
   // The panel can mount before the parent has resolved the requested address.
   useEffect(() => {

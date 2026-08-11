@@ -4,26 +4,53 @@ import { useLaunch } from "../launch/context";
 import { CHAINS, explorerToken, type ChainKey } from "../wallet/chains";
 import { readToken, type TokenData } from "../lib/token";
 import { listTokens, type StoredToken } from "../lib/registry";
+import { factoryAddress, listLaunchedTokens } from "../lib/factory";
 import { fmtEth, fmtTokens, shortAddr } from "../lib/format";
 import HeroBanner from "./HeroBanner";
 import DocsCallout from "./DocsCallout";
+import { navigate } from "../hooks/useHashRoute";
 
 type Filter = "all" | "mine";
 
 interface Row {
-  stored: StoredToken;
+  address: string;
+  /** what this browser remembers about the token; absent for launches discovered on-chain */
+  stored: StoredToken | null;
   data: TokenData | null;
 }
 
-function TokenAvatar({ token, size = "h-8 w-8" }: { token: StoredToken; size?: string }) {
+const symbolOf = (r: Row): string => r.data?.symbol ?? r.stored?.symbol ?? shortAddr(r.address);
+const nameOf = (r: Row): string => r.data?.name ?? r.stored?.name ?? "";
+const imageOf = (r: Row): string => r.data?.imageURI ?? r.stored?.imageURI ?? "";
+
+/** Share of the supply already bought off the curve — how "full" a launch is. */
+function curveProgress(data: TokenData): number {
+  if (data.totalSupply === 0n) return 0;
+  const sold = data.totalSupply - data.tokenReserve;
+  return Number((sold * 10_000n) / data.totalSupply) / 100;
+}
+
+function marketCapWei(data: TokenData): bigint {
+  return (data.priceWei * data.totalSupply) / 1_000_000_000_000_000_000n;
+}
+
+function TokenAvatar({
+  symbol,
+  imageURI,
+  size = "h-8 w-8",
+}: {
+  symbol: string;
+  imageURI: string;
+  size?: string;
+}) {
   return (
     <span
       className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-md border border-plops-edge bg-plops-muted text-xs font-bold text-plops-ink/70`}
     >
-      {token.imageURI ? (
-        <img src={token.imageURI} alt="" className="h-full w-full object-cover" />
+      {imageURI ? (
+        <img src={imageURI} alt="" className="h-full w-full object-cover" />
       ) : (
-        token.symbol.slice(0, 2)
+        symbol.slice(0, 2)
       )}
     </span>
   );
@@ -44,19 +71,41 @@ export default function Terminal() {
   const load = useCallback(async () => {
     const requestId = ++loadId.current;
     const stored = listTokens(chainKey);
-    setRows(stored.map((s) => ({ stored: s, data: null })));
-    if (stored.length === 0) {
+    const storedByAddress = new Map(stored.map((s) => [s.address.toLowerCase(), s]));
+    setRows(stored.map((s) => ({ address: s.address, stored: s, data: null })));
+    setLoading(true);
+
+    // The factory is the global index: launches by anyone show up here, not just this browser's.
+    let indexed: string[] = [];
+    try {
+      indexed = await listLaunchedTokens(chain, 100);
+    } catch {
+      indexed = [];
+    }
+    if (requestId !== loadId.current) return;
+
+    const seen = new Set<string>();
+    const addresses: string[] = [];
+    for (const addr of [...indexed, ...stored.map((s) => s.address)]) {
+      const key = addr.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      addresses.push(addr);
+    }
+    if (addresses.length === 0) {
+      setRows([]);
       setLoading(false);
       return;
     }
-    setLoading(true);
+
     const results = await Promise.all(
-      stored.map(async (s): Promise<Row> => {
+      addresses.map(async (address): Promise<Row> => {
+        const s = storedByAddress.get(address.toLowerCase()) ?? null;
         try {
-          const data = await readToken(chain, s.address, account);
-          return { stored: s, data };
+          const data = await readToken(chain, address, account);
+          return { address, stored: s, data };
         } catch {
-          return { stored: s, data: null };
+          return { address, stored: s, data: null };
         }
       }),
     );
@@ -72,7 +121,8 @@ export default function Terminal() {
   const isMine = (r: Row): boolean => {
     if (!account) return false;
     const acc = account.toLowerCase();
-    if (r.stored.creator.toLowerCase() === acc) return true;
+    const creator = (r.data?.creator ?? r.stored?.creator ?? "").toLowerCase();
+    if (creator === acc) return true;
     return r.data ? r.data.userBalance > 0n : false;
   };
 
@@ -96,15 +146,15 @@ export default function Terminal() {
           ) : (
             <ul>
               {rows.map((r) => (
-                <li key={r.stored.address}>
+                <li key={r.address}>
                   <button
                     type="button"
-                    onClick={() => openTrade(r.stored.address)}
+                    onClick={() => openTrade(r.address)}
                     className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left transition-colors hover:bg-plops-muted"
                   >
                     <span className="flex min-w-0 items-center gap-2">
-                      <TokenAvatar token={r.stored} size="h-7 w-7" />
-                      <span className="truncate text-xs font-semibold">${r.stored.symbol}</span>
+                      <TokenAvatar symbol={symbolOf(r)} imageURI={imageOf(r)} size="h-7 w-7" />
+                      <span className="truncate text-xs font-semibold">${symbolOf(r)}</span>
                     </span>
                     <span className="shrink-0 text-right text-[11px] text-plops-ink/60">
                       {r.data ? `${fmtEth(r.data.priceWei, 6)}` : "—"}
@@ -165,10 +215,23 @@ export default function Terminal() {
 
         {/* table */}
         <div className="mt-3 overflow-hidden rounded-xl border border-plops-edge bg-plops-surface">
+          {!factoryAddress(chain) && (
+            <p className="border-b border-plops-edge bg-plops-muted px-4 py-2 text-[11px] text-plops-ink/55">
+              the global launch index isn't deployed on {chain.short.toLowerCase()} yet, so this list
+              only shows tokens this browser knows about.{" "}
+              <button
+                type="button"
+                onClick={() => navigate("#/factory")}
+                className="font-semibold text-plops-accent underline-offset-2 hover:underline"
+              >
+                deploy the index →
+              </button>
+            </p>
+          )}
           <div className="grid grid-cols-[1.6fr_1fr_1fr_auto] gap-2 border-b border-plops-edge px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-plops-ink/45">
             <span>coin</span>
             <span className="text-right">price (eth)</span>
-            <span className="text-right">liquidity</span>
+            <span className="text-right">market cap</span>
             <span className="text-right">trade</span>
           </div>
 
@@ -191,41 +254,59 @@ export default function Terminal() {
             <ul>
               {visible.map((r) => (
                 <li
-                  key={r.stored.address}
+                  key={r.address}
                   className="grid grid-cols-[1.6fr_1fr_1fr_auto] items-center gap-2 border-b border-plops-edge px-4 py-3 last:border-b-0 transition-colors hover:bg-plops-muted"
                 >
                   <button
                     type="button"
-                    onClick={() => openTrade(r.stored.address)}
+                    onClick={() => openTrade(r.address)}
                     className="flex min-w-0 items-center gap-3 text-left"
                   >
-                    <TokenAvatar token={r.stored} />
+                    <TokenAvatar symbol={symbolOf(r)} imageURI={imageOf(r)} />
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-plops-ink">
-                        ${r.stored.symbol}
+                        ${symbolOf(r)}
                       </span>
-                      <span className="block truncate text-xs text-plops-ink/45">{r.stored.name}</span>
+                      <span className="block truncate text-xs text-plops-ink/45">{nameOf(r)}</span>
+                      {r.data && (
+                        <span className="mt-1 flex items-center gap-1.5">
+                          <span className="h-1 w-16 overflow-hidden rounded-full bg-plops-edge">
+                            <span
+                              className="block h-full rounded-full bg-plops-accent"
+                              style={{ width: `${Math.min(100, Math.max(2, curveProgress(r.data)))}%` }}
+                            />
+                          </span>
+                          <span className="text-[10px] text-plops-ink/40">
+                            {curveProgress(r.data).toFixed(1)}% on curve
+                          </span>
+                        </span>
+                      )}
                     </span>
                   </button>
                   <span className="text-right text-sm text-plops-ink/80">
                     {r.data ? fmtEth(r.data.priceWei, 6) : "—"}
                   </span>
                   <span className="text-right text-sm text-plops-ink/80">
-                    {r.data ? `${fmtEth(r.data.realEthReserve, 4)}` : "—"}
+                    {r.data ? `${fmtEth(marketCapWei(r.data), 3)} eth` : "—"}
+                    {r.data && (
+                      <span className="block text-[10px] text-plops-ink/40">
+                        liq {fmtEth(r.data.realEthReserve, 3)}
+                      </span>
+                    )}
                   </span>
                   <span className="flex items-center justify-end gap-2">
                     <a
-                      href={explorerToken(chain, r.stored.address)}
+                      href={explorerToken(chain, r.address)}
                       target="_blank"
                       rel="noopener noreferrer"
                       title="View on explorer"
                       className="hidden text-xs text-plops-ink/40 hover:text-plops-ink sm:inline"
                     >
-                      {shortAddr(r.stored.address)} ↗
+                      {shortAddr(r.address)} ↗
                     </a>
                     <button
                       type="button"
-                      onClick={() => openTrade(r.stored.address)}
+                      onClick={() => openTrade(r.address)}
                       className="rounded-md border border-plops-accent px-3 py-1.5 text-xs font-semibold lowercase text-plops-accent transition-colors hover:bg-plops-accent hover:text-black"
                     >
                       trade
@@ -266,16 +347,16 @@ export default function Terminal() {
                 const bal = r.data!.userBalance;
                 const valueWei = (bal * r.data!.priceWei) / 1_000_000_000_000_000_000n;
                 return (
-                  <li key={r.stored.address}>
+                  <li key={r.address}>
                     <button
                       type="button"
-                      onClick={() => openTrade(r.stored.address)}
+                      onClick={() => openTrade(r.address)}
                       className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left transition-colors hover:bg-plops-muted"
                     >
                       <span className="flex min-w-0 items-center gap-2">
-                        <TokenAvatar token={r.stored} size="h-7 w-7" />
+                        <TokenAvatar symbol={symbolOf(r)} imageURI={imageOf(r)} size="h-7 w-7" />
                         <span className="min-w-0">
-                          <span className="block truncate text-xs font-semibold">${r.stored.symbol}</span>
+                          <span className="block truncate text-xs font-semibold">${symbolOf(r)}</span>
                           <span className="block truncate text-[10px] text-plops-ink/45">
                             {fmtTokens(bal)}
                           </span>

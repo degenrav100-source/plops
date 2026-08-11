@@ -10,6 +10,8 @@ export interface ChainConfig {
   blockExplorerUrls: string[];
   short: string;
   testnet: boolean;
+  /** PlopsFactory address — the on-chain index every client reads launches from. "" until deployed. */
+  factoryAddress: string;
 }
 
 export const CHAINS: Record<ChainKey, ChainConfig> = {
@@ -23,6 +25,7 @@ export const CHAINS: Record<ChainKey, ChainConfig> = {
     blockExplorerUrls: ["https://robinhoodchain.blockscout.com"],
     short: "Mainnet",
     testnet: false,
+    factoryAddress: "",
   },
   testnet: {
     key: "testnet",
@@ -34,6 +37,7 @@ export const CHAINS: Record<ChainKey, ChainConfig> = {
     blockExplorerUrls: ["https://explorer.testnet.chain.robinhood.com"],
     short: "Testnet",
     testnet: true,
+    factoryAddress: "",
   },
 };
 
