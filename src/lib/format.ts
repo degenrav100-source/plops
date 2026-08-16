@@ -1,8 +1,12 @@
-import { formatEther } from "ethers";
+import { formatEther, formatUnits } from "ethers";
 
 export function fmtEth(wei: bigint, maxFrac = 6): string {
-  const s = formatEther(wei);
-  const n = Number(s);
+  return fmtUnits(wei, 18, maxFrac);
+}
+
+/** Same rendering as `fmtEth`, for quote assets that may not use 18 decimals. */
+export function fmtUnits(value: bigint, decimals: number, maxFrac = 6): string {
+  const n = Number(formatUnits(value, decimals));
   if (n === 0) return "0";
   if (n < 0.000001) return n.toExponential(2);
   return n.toLocaleString(undefined, { maximumFractionDigits: maxFrac });

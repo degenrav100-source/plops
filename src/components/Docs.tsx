@@ -139,7 +139,8 @@ export default function Docs({ section }: { section: string | null }) {
             drain.
           </p>
           <ul className="list-inside list-disc space-y-1">
-            <li>non-custodial: the contract holds the ETH reserve, nobody can withdraw it</li>
+            <li>non-custodial: the contract holds the reserve, nobody can withdraw it</li>
+            <li>pairs: native ETH, or a tokenized stock (RWA) on Robinhood Chain</li>
             <li>audited base: OpenZeppelin <code>ERC20</code> + <code>ReentrancyGuard</code></li>
             <li>metadata on-chain: description, image URI, twitter, telegram, website</li>
             <li>1% fee per trade, paid to the token creator</li>
@@ -160,15 +161,19 @@ export default function Docs({ section }: { section: string | null }) {
               <span className="text-plops-ink">create</span> → name, ticker, pitch, image, socials.
               All of it is stored on-chain.
             </Step>
-            <Step n={4} title="pick your first buy">
-              0.1, 0.05, 0.035, 0.025 ETH or a custom amount — it buys on the curve at launch, so you
+            <Step n={4} title="choose the pair">
+              <span className="text-plops-ink">ETH</span>, or a tokenized stock on Robinhood Chain
+              (AAPL, TSLA, NVDA, SPY…). The pair is what your coin trades against on the curve.
+            </Step>
+            <Step n={5} title="pick your first buy">
+              A preset or a custom amount in the pair asset — it buys on the curve at launch, so you
               are holder #1. Optional.
             </Step>
-            <Step n={5} title="sign it">
-              plops switches the network if needed; you sign the launch. One transaction, no approval
-              step.
+            <Step n={6} title="sign it">
+              plops switches the network if needed; you sign the launch. ETH pairs are one
+              transaction; stock pairs add a one-off ERC-20 approval for the amount you spend.
             </Step>
-            <Step n={6} title="share the address">
+            <Step n={7} title="share the address">
               You get the contract address and an explorer link. Anyone can paste it into search or{" "}
               <span className="text-plops-ink">trade</span> and start buying.
             </Step>

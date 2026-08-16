@@ -54,7 +54,9 @@ describe("PlopsFactory", () => {
     const args = await launch(factory, alice, "SEED", value);
 
     const token = await ethers.getContractAt("PlopsBondingToken", args.token);
-    expect(args.initialBuyWei).to.equal(value);
+    expect(args.initialBuy).to.equal(value);
+    expect(args.quote).to.equal(ethers.ZeroAddress);
+    expect(await factory.quoteOf(args.token)).to.equal(ethers.ZeroAddress);
     expect(await token.balanceOf(alice.address)).to.be.gt(0n);
     expect(await ethers.provider.getBalance(await factory.getAddress())).to.equal(0n);
   });
@@ -73,6 +75,62 @@ describe("PlopsFactory", () => {
     expect(await factory.tokensSlice(9, 5)).to.deep.equal([]);
     expect(await factory.latestTokens(1000)).to.deep.equal([c.token, b.token, a.token]);
     expect(await factory.creatorTokens(alice.address)).to.deep.equal([a.token, c.token]);
+  });
+
+  it("launches a stock-quoted curve, seeds it and keeps no funds", async () => {
+    const { factory, alice } = await deployFactory();
+    const Stock = await ethers.getContractFactory("MockStock");
+    const stock = await Stock.deploy("Apple - Robinhood Token", "AAPL");
+    await stock.waitForDeployment();
+    const stockAddr = await stock.getAddress();
+
+    const seed = ethers.parseEther("2"); // 2 AAPL
+    await stock.mint(alice.address, seed);
+    await stock.connect(alice).approve(await factory.getAddress(), seed);
+
+    const tx = await factory
+      .connect(alice)
+      .launchWithQuote("Apple Plops", "APLOP", stockAddr, ethers.parseEther("1"), seed, META);
+    const receipt = await tx.wait();
+    const args = factory.interface.parseLog(
+      receipt.logs.find((l) => {
+        try {
+          return factory.interface.parseLog(l)?.name === "TokenLaunched";
+        } catch {
+          return false;
+        }
+      }),
+    ).args;
+
+    expect(args.quote).to.equal(stockAddr);
+    expect(args.initialBuy).to.equal(seed);
+    expect(await factory.quoteOf(args.token)).to.equal(stockAddr);
+    expect(await factory.isPlopsToken(args.token)).to.equal(true);
+
+    const token = await ethers.getContractAt("PlopsQuotedToken", args.token);
+    // the creator, not the factory, holds the seed buy and the fee
+    expect(await token.balanceOf(alice.address)).to.be.gt(0n);
+    expect(await token.balanceOf(await factory.getAddress())).to.equal(0n);
+    expect(await stock.balanceOf(await factory.getAddress())).to.equal(0n);
+    expect(await stock.allowance(await factory.getAddress(), args.token)).to.equal(0n);
+    // 1% fee went back to the creator, the rest sits in the curve
+    expect(await stock.balanceOf(alice.address)).to.equal(seed / 100n);
+    expect(await token.realQuoteReserve()).to.equal(seed - seed / 100n);
+  });
+
+  it("launches a stock-quoted curve without a seed buy", async () => {
+    const { factory, alice } = await deployFactory();
+    const Stock = await ethers.getContractFactory("MockStock");
+    const stock = await Stock.deploy("Tesla - Robinhood Token", "TSLA");
+    await stock.waitForDeployment();
+
+    await factory
+      .connect(alice)
+      .launchWithQuote("Tesla Plops", "TPLOP", await stock.getAddress(), ethers.parseEther("1"), 0n, META);
+
+    const token = await ethers.getContractAt("PlopsQuotedToken", await factory.tokens(0));
+    expect(await token.tokenReserve()).to.equal(await token.TOTAL_SUPPLY());
+    expect(await token.realQuoteReserve()).to.equal(0n);
   });
 
   it("does not vouch for tokens deployed outside the factory", async () => {

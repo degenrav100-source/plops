@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { formatEther, parseEther } from "ethers";
+import { formatEther, parseUnits } from "ethers";
 import { useWallet } from "../wallet/context";
 import { useToast } from "../toast/context";
 import { CHAINS, explorerToken, type ChainKey } from "../wallet/chains";
@@ -15,9 +15,11 @@ import {
 } from "../lib/token";
 import { listTokens } from "../lib/registry";
 import { listLaunchedTokens } from "../lib/factory";
-import { fmtEth, fmtTokens, isAddress, shortAddr, toExternalUrl } from "../lib/format";
+import { NATIVE_QUOTE, isNativeQuote } from "../lib/quotes";
+import { fmtTokens, fmtUnits, isAddress, shortAddr, toExternalUrl } from "../lib/format";
 
-const BUY_PRESETS = ["0.1", "0.05", "0.035", "0.025"];
+const ETH_BUY_PRESETS = ["0.1", "0.05", "0.035", "0.025"];
+const STOCK_BUY_PRESETS = ["1", "0.5", "0.25", "0.1"];
 const SELL_PRESETS: { label: string; pct: bigint }[] = [
   { label: "25%", pct: 25n },
   { label: "50%", pct: 50n },
@@ -40,6 +42,10 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
   const [data, setData] = useState<TokenData | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
+
+  // What the selected curve is priced in; ETH until the token is loaded.
+  const asset = data?.quote ?? NATIVE_QUOTE;
+  const buyPresets = isNativeQuote(asset) ? ETH_BUY_PRESETS : STOCK_BUY_PRESETS;
 
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("");
@@ -115,7 +121,8 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
     }
     let parsed: bigint;
     try {
-      parsed = parseEther(amount.trim());
+      // buys are denominated in the quote asset, sells in the launched token (18 dp)
+      parsed = parseUnits(amount.trim(), side === "buy" ? asset.decimals : 18);
     } catch {
       setQuote(null);
       return;
@@ -135,7 +142,7 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [amount, side, selected, chain]);
+  }, [amount, side, selected, chain, asset.decimals]);
 
   const marketCapWei = useMemo(() => {
     if (!data) return 0n;
@@ -162,7 +169,7 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
     }
     let parsed: bigint;
     try {
-      parsed = parseEther(amount.trim());
+      parsed = parseUnits(amount.trim(), side === "buy" ? asset.decimals : 18);
     } catch {
       setTxError("Invalid amount.");
       return;
@@ -175,9 +182,13 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
     try {
       setTxStatus(`Switching to ${chain.short}…`);
       await switchChain(chain);
-      setTxStatus("Confirm in your wallet…");
+      setTxStatus(
+        side === "buy" && !isNativeQuote(asset)
+          ? `Approve ${asset.symbol}, then confirm the buy in your wallet…`
+          : "Confirm in your wallet…",
+      );
       if (side === "buy") {
-        await buyToken(activeProvider, selected, parsed);
+        await buyToken(activeProvider, selected, parsed, 300, asset);
         notify(`Bought ${data?.symbol ?? "tokens"} 🎉`);
       } else {
         await sellToken(activeProvider, selected, parsed);
@@ -270,9 +281,12 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
             </div>
             {data.description && <p className="mt-3 text-sm text-plops-ink/70">{data.description}</p>}
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Stat label="Price" value={`${fmtEth(data.priceWei, 8)} ETH`} />
-              <Stat label="Market cap" value={`${fmtEth(marketCapWei, 3)} ETH`} />
-              <Stat label="Liquidity" value={`${fmtEth(data.realEthReserve, 4)} ETH`} />
+              <Stat label="Price" value={`${fmtUnits(data.priceWei, asset.decimals, 8)} ${asset.symbol}`} />
+              <Stat label="Market cap" value={`${fmtUnits(marketCapWei, asset.decimals, 3)} ${asset.symbol}`} />
+              <Stat
+                label="Liquidity"
+                value={`${fmtUnits(data.realQuoteReserve, asset.decimals, 4)} ${asset.symbol}`}
+              />
               <Stat label="Your balance" value={fmtTokens(data.userBalance)} />
             </div>
             <SocialRow twitter={data.twitter} telegram={data.telegram} website={data.website} />
@@ -307,20 +321,20 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               inputMode="decimal"
-              placeholder={side === "buy" ? "ETH amount" : `${data.symbol} amount`}
+              placeholder={side === "buy" ? `${asset.symbol} amount` : `${data.symbol} amount`}
               className="plops-input"
             />
 
             <div className="mt-2 flex flex-wrap gap-2">
               {side === "buy"
-                ? BUY_PRESETS.map((p) => (
+                ? buyPresets.map((p) => (
                     <button
                       key={p}
                       type="button"
                       onClick={() => setAmount(p)}
                       className="rounded-md border border-plops-edge bg-plops-muted px-3 py-1 text-xs font-semibold text-plops-ink/70 hover:text-plops-ink"
                     >
-                      {p} ETH
+                      {p} {asset.symbol}
                     </button>
                   ))
                 : SELL_PRESETS.map((p) => (
@@ -337,7 +351,10 @@ export default function TradePanel({ chainKey, initialAddress }: Props) {
 
             {quote !== null && (
               <p className="mt-2 text-sm text-plops-ink/70">
-                ≈ {side === "buy" ? `${fmtTokens(quote)} ${data.symbol}` : `${fmtEth(quote, 6)} ETH`}{" "}
+                ≈{" "}
+                {side === "buy"
+                  ? `${fmtTokens(quote)} ${data.symbol}`
+                  : `${fmtUnits(quote, asset.decimals, 6)} ${asset.symbol}`}{" "}
                 <span className="text-plops-ink/40">(after 1% fee)</span>
               </p>
             )}
