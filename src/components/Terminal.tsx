@@ -235,7 +235,7 @@ export default function Terminal() {
           )}
           <div className="grid grid-cols-[1.6fr_1fr_1fr_auto] gap-2 border-b border-plops-edge px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-plops-ink/45">
             <span>coin</span>
-            <span className="text-right">price (eth)</span>
+            <span className="text-right">price</span>
             <span className="text-right">market cap</span>
             <span className="text-right">trade</span>
           </div>
@@ -294,7 +294,9 @@ export default function Terminal() {
                     </span>
                   </button>
                   <span className="text-right text-sm text-plops-ink/80">
-                    {r.data ? fmtUnits(r.data.priceWei, quoteOf(r).decimals, 6) : "—"}
+                    {r.data
+                      ? `${fmtUnits(r.data.priceWei, quoteOf(r).decimals, 6)} ${quoteOf(r).symbol.toLowerCase()}`
+                      : "—"}
                   </span>
                   <span className="text-right text-sm text-plops-ink/80">
                     {r.data

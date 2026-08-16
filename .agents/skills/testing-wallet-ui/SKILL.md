@@ -77,6 +77,33 @@ accounts are unlocked, so `eth_sendTransaction` just works:
    `wallet_switchEthereumChain`/`wallet_addEthereumChain`.
 4. Use a *different* hardhat account per persona (deployer of the index, launcher, trader) and clear
    `localStorage` between personas to prove global discovery instead of local registry echo.
+5. The launch index (PlopsFactory) is not baked into `chains.ts`; deploy it from the `#/factory` page
+   with the forwarding wallet connected — it stores the address in `localStorage` per chain, so it
+   survives reloads but is lost if you clear storage between personas (re-deploy or re-set it).
+
+### Testing ERC20-quoted ("stock pair") curves locally
+Quote assets come from `src/lib/quotes.ts`, and only mainnet lists stocks, so a local node needs a
+temporary entry:
+
+1. Deploy the test ERC20 and mint yourself a balance:
+   `cd contracts && npx hardhat run <script> --network localhost` with
+   `MockStock.deploy("Tesla","TSLA")` then `mint(account0, parseUnits("100",18))`.
+2. Add `{ address: <MockStock>, symbol: "TSLA", name: "Tesla", decimals: 18 }` to
+   `RWA_QUOTES.testnet` in `src/lib/quotes.ts`, rebuild, preview. **Restore before committing.**
+3. Keep a *second*, unmodified build served separately (e.g. `cp -r dist /tmp/dist-pristine` before
+   the edit and `python3 -m http.server` from a dir with the bundle under `plops/`) so the
+   "testnet is ETH-only" and "mainnet lists 12 stocks" assertions are made against real branch code
+   rather than your local hack.
+4. Quote-denominated flows are two transactions (ERC20 `approve`, then `launchWithQuote`/`buy`).
+   Prove both were signed by grepping the hardhat node log for
+   `Contract call: MockStock#approve` followed by `PlopsFactory#launchWithQuote`.
+5. Reserves/labels come from on-chain reads, so a wrong ABI branch shows as ETH labels on a
+   stock-paired token. Cross-check with `token.quote()`, `realQuoteReserve()` and the wallet's
+   `MockStock.balanceOf` before/after each trade — a 1% fee goes back to the creator, so a 2-unit
+   seed buy only moves the balance by 1.98 when the launcher is the creator.
+6. Known cosmetic gap: the market table's column header is the static string `price (eth)` even when
+   a row is stock-paired (per-row values are correctly labelled via the `/SYMBOL` badge and unit
+   suffixes) — check whether this is intended before filing it as a bug.
 
 ## Testing copy / branding changes
 A copy PR is easy to "verify" with a screenshot that would look the same if it were broken, so make
