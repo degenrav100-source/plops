@@ -5,7 +5,8 @@ import { CHAINS, explorerToken, type ChainKey } from "../wallet/chains";
 import { readToken, type TokenData } from "../lib/token";
 import { listTokens, type StoredToken } from "../lib/registry";
 import { factoryAddress, listLaunchedTokens } from "../lib/factory";
-import { fmtEth, fmtTokens, shortAddr } from "../lib/format";
+import { isNativeQuote } from "../lib/quotes";
+import { fmtTokens, fmtUnits, shortAddr } from "../lib/format";
 import HeroBanner from "./HeroBanner";
 import DocsCallout from "./DocsCallout";
 import { navigate } from "../hooks/useHashRoute";
@@ -30,9 +31,13 @@ function curveProgress(data: TokenData): number {
   return Number((sold * 10_000n) / data.totalSupply) / 100;
 }
 
+/** Market cap in the curve's own quote units (ETH, or a tokenized stock). */
 function marketCapWei(data: TokenData): bigint {
   return (data.priceWei * data.totalSupply) / 1_000_000_000_000_000_000n;
 }
+
+const quoteOf = (r: Row): { symbol: string; decimals: number } =>
+  r.data?.quote ?? { symbol: "eth", decimals: 18 };
 
 function TokenAvatar({
   symbol,
@@ -157,7 +162,7 @@ export default function Terminal() {
                       <span className="truncate text-xs font-semibold">${symbolOf(r)}</span>
                     </span>
                     <span className="shrink-0 text-right text-[11px] text-plops-ink/60">
-                      {r.data ? `${fmtEth(r.data.priceWei, 6)}` : "—"}
+                      {r.data ? fmtUnits(r.data.priceWei, quoteOf(r).decimals, 6) : "—"}
                     </span>
                   </button>
                 </li>
@@ -230,7 +235,7 @@ export default function Terminal() {
           )}
           <div className="grid grid-cols-[1.6fr_1fr_1fr_auto] gap-2 border-b border-plops-edge px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-plops-ink/45">
             <span>coin</span>
-            <span className="text-right">price (eth)</span>
+            <span className="text-right">price</span>
             <span className="text-right">market cap</span>
             <span className="text-right">trade</span>
           </div>
@@ -264,8 +269,13 @@ export default function Terminal() {
                   >
                     <TokenAvatar symbol={symbolOf(r)} imageURI={imageOf(r)} />
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-plops-ink">
+                      <span className="flex items-center gap-1.5 truncate text-sm font-semibold text-plops-ink">
                         ${symbolOf(r)}
+                        {r.data && !isNativeQuote(r.data.quote) && (
+                          <span className="rounded border border-plops-edge px-1 text-[10px] font-semibold uppercase text-plops-ink/50">
+                            /{r.data.quote.symbol}
+                          </span>
+                        )}
                       </span>
                       <span className="block truncate text-xs text-plops-ink/45">{nameOf(r)}</span>
                       {r.data && (
@@ -284,13 +294,17 @@ export default function Terminal() {
                     </span>
                   </button>
                   <span className="text-right text-sm text-plops-ink/80">
-                    {r.data ? fmtEth(r.data.priceWei, 6) : "—"}
+                    {r.data
+                      ? `${fmtUnits(r.data.priceWei, quoteOf(r).decimals, 6)} ${quoteOf(r).symbol.toLowerCase()}`
+                      : "—"}
                   </span>
                   <span className="text-right text-sm text-plops-ink/80">
-                    {r.data ? `${fmtEth(marketCapWei(r.data), 3)} eth` : "—"}
+                    {r.data
+                      ? `${fmtUnits(marketCapWei(r.data), quoteOf(r).decimals, 3)} ${quoteOf(r).symbol.toLowerCase()}`
+                      : "—"}
                     {r.data && (
                       <span className="block text-[10px] text-plops-ink/40">
-                        liq {fmtEth(r.data.realEthReserve, 3)}
+                        liq {fmtUnits(r.data.realQuoteReserve, quoteOf(r).decimals, 3)}
                       </span>
                     )}
                   </span>
@@ -363,7 +377,7 @@ export default function Terminal() {
                         </span>
                       </span>
                       <span className="shrink-0 text-right text-[11px] text-plops-ink/60">
-                        {fmtEth(valueWei, 4)} eth
+                        {fmtUnits(valueWei, quoteOf(r).decimals, 4)} {quoteOf(r).symbol.toLowerCase()}
                       </span>
                     </button>
                   </li>

@@ -1,5 +1,5 @@
-import { useRef, useState, type ReactNode } from "react";
-import { parseEther } from "ethers";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { formatUnits, parseUnits } from "ethers";
 import { useWallet } from "../wallet/context";
 import { useToast } from "../toast/context";
 import { CHAINS, explorerToken, explorerTx, type ChainKey } from "../wallet/chains";
@@ -7,8 +7,10 @@ import { launchToken } from "../lib/factory";
 import { addToken } from "../lib/registry";
 import { getPinataJwt, hasPinataJwt, setPinataJwt, uploadImageToIpfs } from "../lib/ipfs";
 import { toExternalUrl } from "../lib/format";
+import { NATIVE_QUOTE, isNativeQuote, quoteBalanceOf, quoteOptions } from "../lib/quotes";
 
-const BUY_PRESETS = ["0.1", "0.05", "0.035", "0.025"];
+const ETH_BUY_PRESETS = ["0.1", "0.05", "0.035", "0.025"];
+const STOCK_BUY_PRESETS = ["1", "0.5", "0.25", "0.1"];
 
 interface Props {
   chainKey: ChainKey;
@@ -30,6 +32,8 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
   const [imagePreview, setImagePreview] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [initialBuy, setInitialBuy] = useState("");
+  const [quoteAddress, setQuoteAddress] = useState(NATIVE_QUOTE.address);
+  const [quoteBalance, setQuoteBalance] = useState<bigint | null>(null);
   const [jwtInput, setJwtInput] = useState(getPinataJwt());
   const [showKey, setShowKey] = useState(false);
 
@@ -43,6 +47,28 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
   } | null>(null);
 
   const chain = CHAINS[chainKey];
+  const pairs = useMemo(() => quoteOptions(chain), [chain]);
+  const quote = pairs.find((q) => q.address === quoteAddress) ?? NATIVE_QUOTE;
+  const presets = isNativeQuote(quote) ? ETH_BUY_PRESETS : STOCK_BUY_PRESETS;
+
+  // A pair only exists on the chain that lists it, so reset when switching networks.
+  useEffect(() => {
+    if (!pairs.some((q) => q.address === quoteAddress)) setQuoteAddress(NATIVE_QUOTE.address);
+  }, [pairs, quoteAddress]);
+
+  useEffect(() => {
+    if (!connection) {
+      setQuoteBalance(null);
+      return;
+    }
+    let stale = false;
+    quoteBalanceOf(chain, quote, connection.address)
+      .then((b) => !stale && setQuoteBalance(b))
+      .catch(() => !stale && setQuoteBalance(null));
+    return () => {
+      stale = true;
+    };
+  }, [chain, quote, connection]);
 
   const onPickFile = (file: File | null) => {
     setImageFile(file);
@@ -75,12 +101,12 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
       setError("Give your coin a name and a ticker first.");
       return;
     }
-    let buyWei = 0n;
+    let buyAmount = 0n;
     if (initialBuy.trim()) {
       try {
-        buyWei = parseEther(initialBuy.trim());
+        buyAmount = parseUnits(initialBuy.trim(), quote.decimals);
       } catch {
-        setError("That first-buy amount is not a valid number of ETH.");
+        setError(`That first-buy amount is not a valid number of ${quote.symbol}.`);
         return;
       }
     }
@@ -89,7 +115,11 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
       setStatus(`Switching to ${chain.chainName}…`);
       await switchChain(chain);
       const imageURI = await resolveImageUri();
-      setStatus("Confirm the launch in your wallet…");
+      setStatus(
+        isNativeQuote(quote) || buyAmount === 0n
+          ? "Confirm the launch in your wallet…"
+          : `Approve ${quote.symbol}, then confirm the launch in your wallet…`,
+      );
       const res = await launchToken(
         activeProvider,
         chain,
@@ -102,7 +132,8 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
           telegram: toExternalUrl(telegram),
           website: toExternalUrl(website),
         },
-        buyWei,
+        buyAmount,
+        quote,
       );
       addToken({
         address: res.address,
@@ -271,9 +302,50 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
         </Field>
       </div>
 
-      <Field label="First buy" hint="ETH you spend on the curve at launch — optional">
+      <Field
+        label="Pair"
+        hint={
+          pairs.length > 1
+            ? "what your coin trades against on the curve"
+            : "stock pairs are mainnet-only"
+        }
+      >
+        <div className="flex flex-wrap gap-2">
+          {pairs.map((q) => (
+            <button
+              key={q.address || "native"}
+              type="button"
+              onClick={() => {
+                setQuoteAddress(q.address);
+                setInitialBuy("");
+              }}
+              title={q.name}
+              className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${
+                q.address === quote.address
+                  ? "bg-plops-accent text-black"
+                  : "border border-plops-edge bg-plops-muted text-plops-ink/70 hover:text-plops-ink"
+              }`}
+            >
+              {q.symbol}
+            </button>
+          ))}
+        </div>
+        <p className="mt-1 text-[11px] text-plops-ink/45">
+          {isNativeQuote(quote)
+            ? "Buys and sells settle in ETH."
+            : `Buys and sells settle in ${quote.symbol} — ${quote.name}, tokenized on ${chain.chainName}.`}
+          {quoteBalance !== null && (
+            <> Your balance: {trimAmount(formatUnits(quoteBalance, quote.decimals))} {quote.symbol}.</>
+          )}
+        </p>
+      </Field>
+
+      <Field
+        label="First buy"
+        hint={`${quote.symbol} you spend on the curve at launch — optional`}
+      >
         <div className="flex flex-wrap items-center gap-2">
-          {BUY_PRESETS.map((p) => (
+          {presets.map((p) => (
             <button
               key={p}
               type="button"
@@ -284,7 +356,7 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
                   : "border border-plops-edge bg-plops-muted text-plops-ink/70 hover:text-plops-ink"
               }`}
             >
-              {p} ETH
+              {p} {quote.symbol}
             </button>
           ))}
           <input
@@ -313,6 +385,11 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
       </p>
     </div>
   );
+}
+
+/** 1.5000 → 1.5, 2.000000 → 2 — balances read better without trailing zeros. */
+function trimAmount(value: string): string {
+  return value.includes(".") ? value.replace(/0+$/, "").replace(/\.$/, "") : value;
 }
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {

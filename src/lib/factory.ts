@@ -9,7 +9,8 @@ import { PLOPS_FACTORY_ABI, PLOPS_FACTORY_BYTECODE } from "../contracts/PlopsFac
 import type { Eip1193Provider } from "../wallet/types";
 import type { ChainConfig, ChainKey } from "../wallet/chains";
 import type { DeployParams } from "./token";
-import { deployToken } from "./token";
+import { deployQuotedToken, deployToken, ensureQuoteAllowance } from "./token";
+import { NATIVE_QUOTE, isNativeQuote, type QuoteAsset } from "./quotes";
 
 const OVERRIDE_KEY = "plops-factory";
 
@@ -78,19 +79,31 @@ export async function launchedTokensCount(chain: ChainConfig): Promise<number> {
   return Number((await c.tokensCount()) as bigint);
 }
 
+/** Virtual reserve seeding a curve: one whole unit of the quote asset. */
+export function virtualQuoteFor(quote: QuoteAsset): bigint {
+  return 10n ** BigInt(quote.decimals);
+}
+
 /**
  * Launch a token. Goes through the factory when the chain has one (so the token lands in the
  * global index); otherwise falls back to deploying the token contract directly.
+ *
+ * `quote` picks what the curve is priced in: native ETH, or a tokenized stock, in which case
+ * the seed buy is an ERC20 transfer and needs an allowance for whoever pulls it.
  */
 export async function launchToken(
   provider: Eip1193Provider,
   chain: ChainConfig,
   params: DeployParams,
-  initialBuyWei: bigint,
+  initialBuy: bigint,
+  quote: QuoteAsset = NATIVE_QUOTE,
 ): Promise<{ address: string; txHash: string; indexed: boolean }> {
   const address = factoryAddress(chain);
+  const native = isNativeQuote(quote);
   if (!address) {
-    const res = await deployToken(provider, params, initialBuyWei);
+    const res = native
+      ? await deployToken(provider, params, initialBuy)
+      : await deployQuotedToken(provider, params, quote, virtualQuoteFor(quote), initialBuy);
     return { ...res, indexed: false };
   }
 
@@ -103,7 +116,21 @@ export async function launchToken(
     params.telegram,
     params.website,
   ];
-  const tx = await factory.launch(params.name, params.symbol, meta, { value: initialBuyWei });
+
+  let tx;
+  if (native) {
+    tx = await factory.launch(params.name, params.symbol, meta, { value: initialBuy });
+  } else {
+    await ensureQuoteAllowance(provider, quote, address, initialBuy);
+    tx = await factory.launchWithQuote(
+      params.name,
+      params.symbol,
+      quote.address,
+      virtualQuoteFor(quote),
+      initialBuy,
+      meta,
+    );
+  }
   const receipt = await tx.wait();
 
   let token = "";
