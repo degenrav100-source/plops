@@ -33,6 +33,13 @@ export default function Footer() {
           >
             docs
           </button>
+          <button
+            type="button"
+            onClick={() => navigate("#/factory")}
+            className="lowercase transition-colors hover:text-plops-ink"
+          >
+            launch index
+          </button>
           <a
             href={CHAINS.mainnet.blockExplorerUrls[0]}
             target="_blank"

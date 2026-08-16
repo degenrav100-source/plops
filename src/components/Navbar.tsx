@@ -42,6 +42,10 @@ export default function Navbar({ theme, toggleTheme }: Props) {
     setOpen(false);
     navigate(section ? `#/docs/${section}` : "#/docs");
   };
+  const goFactory = () => {
+    setOpen(false);
+    navigate("#/factory");
+  };
 
   const explorer = `${CHAINS.mainnet.blockExplorerUrls[0]}`;
 
@@ -74,6 +78,9 @@ export default function Navbar({ theme, toggleTheme }: Props) {
       </button>
       <button type="button" onClick={() => goDocs()} className="nav-link">
         docs
+      </button>
+      <button type="button" onClick={goFactory} className="nav-link">
+        launch index
       </button>
       <a href={explorer} target="_blank" rel="noopener noreferrer" className="nav-link">
         explorer
