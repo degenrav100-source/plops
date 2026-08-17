@@ -3,6 +3,7 @@ import {
   Contract,
   ContractFactory,
   JsonRpcProvider,
+  ZeroAddress,
   type Eip1193Provider as EthersEip1193Provider,
 } from "ethers";
 import { PLOPS_FACTORY_ABI, PLOPS_FACTORY_BYTECODE } from "../contracts/PlopsFactory";
@@ -13,6 +14,15 @@ import { deployQuotedToken, deployToken, ensureQuoteAllowance } from "./token";
 import { NATIVE_QUOTE, isNativeQuote, type QuoteAsset } from "./quotes";
 
 const OVERRIDE_KEY = "plops-factory";
+
+export interface LaunchResult {
+  address: string;
+  txHash: string;
+  /** the launch is in the on-chain index, not just this browser's registry */
+  indexed: boolean;
+  /** the coin exists, but its seed buy did not go through — see `deployQuotedToken` */
+  seedError?: string;
+}
 
 function overrideKey(chainKey: ChainKey): string {
   return `${OVERRIDE_KEY}-${chainKey}`;
@@ -79,6 +89,20 @@ export async function launchedTokensCount(chain: ChainConfig): Promise<number> {
   return Number((await c.tokensCount()) as bigint);
 }
 
+/**
+ * Whether an index understands ERC20-quoted launches. Indexes deployed from `#/factory` before
+ * stock pairs existed have no `launchWithQuote`, and calling it would revert with nothing but
+ * "execution reverted" — after the user had already signed the allowance.
+ */
+async function supportsQuotedLaunch(chain: ChainConfig, address: string): Promise<boolean> {
+  try {
+    await rpcContract(chain, address).quoteOf.staticCall(ZeroAddress);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Virtual reserve seeding a curve: one whole unit of the quote asset. */
 export function virtualQuoteFor(quote: QuoteAsset): bigint {
   return 10n ** BigInt(quote.decimals);
@@ -97,10 +121,11 @@ export async function launchToken(
   params: DeployParams,
   initialBuy: bigint,
   quote: QuoteAsset = NATIVE_QUOTE,
-): Promise<{ address: string; txHash: string; indexed: boolean }> {
+): Promise<LaunchResult> {
   const address = factoryAddress(chain);
   const native = isNativeQuote(quote);
-  if (!address) {
+  const viaFactory = address !== "" && (native || (await supportsQuotedLaunch(chain, address)));
+  if (!viaFactory) {
     const res = native
       ? await deployToken(provider, params, initialBuy)
       : await deployQuotedToken(provider, params, quote, virtualQuoteFor(quote), initialBuy);
