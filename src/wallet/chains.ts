@@ -12,6 +12,8 @@ export interface ChainConfig {
   testnet: boolean;
   /** PlopsFactory address — the on-chain index every client reads launches from. "" until deployed. */
   factoryAddress: string;
+  /** PlopsNFT address — the plops genesis collection. "" until deployed. */
+  nftAddress: string;
 }
 
 export const CHAINS: Record<ChainKey, ChainConfig> = {
@@ -26,6 +28,7 @@ export const CHAINS: Record<ChainKey, ChainConfig> = {
     short: "Mainnet",
     testnet: false,
     factoryAddress: "",
+    nftAddress: "",
   },
   testnet: {
     key: "testnet",
@@ -38,6 +41,7 @@ export const CHAINS: Record<ChainKey, ChainConfig> = {
     short: "Testnet",
     testnet: true,
     factoryAddress: "",
+    nftAddress: "",
   },
 };
 

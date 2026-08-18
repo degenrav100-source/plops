@@ -8,6 +8,7 @@ const CONTRACTS = [
   { contract: "PlopsBondingToken", abiConst: "PLOPS_TOKEN_ABI", bytecodeConst: "PLOPS_TOKEN_BYTECODE" },
   { contract: "PlopsFactory", abiConst: "PLOPS_FACTORY_ABI", bytecodeConst: "PLOPS_FACTORY_BYTECODE" },
   { contract: "PlopsQuotedToken", abiConst: "PLOPS_QUOTED_ABI", bytecodeConst: "PLOPS_QUOTED_BYTECODE" },
+  { contract: "PlopsNFT", abiConst: "PLOPS_NFT_ABI", bytecodeConst: "PLOPS_NFT_BYTECODE" },
 ];
 
 for (const { contract, abiConst, bytecodeConst } of CONTRACTS) {

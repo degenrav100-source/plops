@@ -5,6 +5,7 @@ import { useHashRoute } from "./hooks/useHashRoute";
 import Terminal from "./components/Terminal";
 import Docs from "./components/Docs";
 import FactorySetup from "./components/FactorySetup";
+import NftMint from "./components/NftMint";
 import Footer from "./components/Footer";
 import WalletModal from "./components/WalletModal";
 import WelcomeGate from "./components/WelcomeGate";
@@ -27,6 +28,8 @@ export default function App() {
                 <Docs section={section} />
               ) : route === "factory" ? (
                 <FactorySetup />
+              ) : route === "nft" ? (
+                <NftMint />
               ) : (
                 <Terminal />
               )}

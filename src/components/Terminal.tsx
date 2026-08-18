@@ -9,6 +9,7 @@ import { isNativeQuote } from "../lib/quotes";
 import { fmtTokens, fmtUnits, shortAddr } from "../lib/format";
 import HeroBanner from "./HeroBanner";
 import DocsCallout from "./DocsCallout";
+import NftCallout from "./NftCallout";
 import { navigate } from "../hooks/useHashRoute";
 
 type Filter = "all" | "mine";
@@ -176,6 +177,7 @@ export default function Terminal() {
       <main className="order-1 min-w-0 lg:order-2">
         <HeroBanner />
         <DocsCallout />
+        <NftCallout />
 
         {/* controls */}
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
