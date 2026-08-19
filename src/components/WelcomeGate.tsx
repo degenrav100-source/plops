@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { navigate } from "../hooks/useHashRoute";
 
-const STORAGE_KEY = "plops-welcome-accepted";
 const logoSrc = `${import.meta.env.BASE_URL}logo.png`;
+const docsHref = `${import.meta.env.BASE_URL}#/docs`;
 
 const steps = [
   {
@@ -19,17 +18,10 @@ const steps = [
   },
 ];
 
-/** First-visit guide + risk agreement. Shown once per browser, remembered in localStorage. */
+/** Guide + terms agreement. Shown on every visit, never remembered away. */
 export default function WelcomeGate() {
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    try {
-      if (!localStorage.getItem(STORAGE_KEY)) setOpen(true);
-    } catch {
-      setOpen(true);
-    }
-  }, []);
+  const [open, setOpen] = useState(true);
+  const [agreed, setAgreed] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -40,15 +32,6 @@ export default function WelcomeGate() {
   }, [open]);
 
   if (!open) return null;
-
-  const accept = () => {
-    try {
-      localStorage.setItem(STORAGE_KEY, new Date().toISOString());
-    } catch {
-      /* private mode: the gate simply shows again next visit */
-    }
-    setOpen(false);
-  };
 
   return (
     <div
@@ -98,20 +81,36 @@ export default function WelcomeGate() {
           is financial advice.
         </p>
 
+        <label className="mt-4 flex cursor-pointer items-start gap-2 text-xs text-plops-ink/70">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-plops-accent"
+          />
+          <span>
+            I have read and agree to these terms: plops is non-custodial software, I am responsible
+            for every transaction I sign, and I accept the risk of total loss.
+          </span>
+        </label>
+
         <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-          <button type="button" onClick={accept} className="btn-primary sm:flex-1">
-            i understand, enter plops
-          </button>
           <button
             type="button"
-            onClick={() => {
-              accept();
-              navigate("#/docs");
-            }}
-            className="btn-ghost sm:flex-1"
+            onClick={() => setOpen(false)}
+            disabled={!agreed}
+            className="btn-primary disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1"
+          >
+            {agreed ? "enter plops" : "agree to the terms to continue"}
+          </button>
+          <a
+            href={docsHref}
+            target="_blank"
+            rel="noreferrer"
+            className="btn-ghost text-center sm:flex-1"
           >
             read the docs first
-          </button>
+          </a>
         </div>
       </div>
     </div>
