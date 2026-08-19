@@ -95,7 +95,6 @@ describe("PlopsNFT", function () {
       "Backdrop",
       "Body",
       "Ears",
-      "Eyes",
       "Mouth",
       "Extra",
     ]);
@@ -142,7 +141,7 @@ describe("PlopsNFT", function () {
       backdrop: new Set(),
       body: new Set(),
       ears: new Set(),
-      eyes: new Set(),
+      mouth: new Set(),
       extra: new Set(),
     };
     for (let id = 1; id <= 120; id++) {
@@ -150,13 +149,13 @@ describe("PlopsNFT", function () {
       seen.backdrop.add(t.backdrop);
       seen.body.add(t.body);
       seen.ears.add(t.ears);
-      seen.eyes.add(t.eyes);
+      seen.mouth.add(t.mouth);
       seen.extra.add(t.extra);
     }
     expect(seen.backdrop.size).to.equal(6);
     expect(seen.body.size).to.equal(8);
     expect(seen.ears.size).to.equal(4);
-    expect(seen.eyes.size).to.equal(6);
+    expect(seen.mouth.size).to.equal(4);
     expect(seen.extra.size).to.equal(4);
   });
 });

@@ -67,7 +67,7 @@ contract PlopsNFT is ERC721, ERC2981, Ownable, ReentrancyGuard {
     // ------------------------------------------------------------------- art
     //
     // Every plop is the pixel logo redrawn on a 12x12 grid: same silhouette family, different
-    // ears, colours, eyes, mouth and extras. The grid is filled cell by cell, then emitted as
+    // ears, colours, mouth and extras. The grid is filled cell by cell, then emitted as
     // one <rect> per horizontal run of the same colour.
 
     uint256 private constant GRID = 12;
@@ -82,7 +82,6 @@ contract PlopsNFT is ERC721, ERC2981, Ownable, ReentrancyGuard {
         uint256 backdrop;
         uint256 body;
         uint256 ears;
-        uint256 eyes;
         uint256 mouth;
         uint256 extra;
     }
@@ -92,7 +91,6 @@ contract PlopsNFT is ERC721, ERC2981, Ownable, ReentrancyGuard {
         t.backdrop = (s >> 8) % 6;
         t.body = (s >> 24) % 8;
         t.ears = (s >> 36) % 4;
-        t.eyes = (s >> 48) % 6;
         t.mouth = (s >> 60) % 4;
         // extras are the rarity axis: ~55% none, blush, sparkles, and a 7% crown
         uint256 e = (s >> 72) % 100;
@@ -167,11 +165,6 @@ contract PlopsNFT is ERC721, ERC2981, Ownable, ReentrancyGuard {
         return n[i];
     }
 
-    function eyesName(uint256 i) internal pure returns (string memory) {
-        string[6] memory n = ["dot", "wide", "wink", "visor", "sleepy", "starry"];
-        return n[i];
-    }
-
     function mouthName(uint256 i) internal pure returns (string memory) {
         string[4] memory n = ["none", "smile", "plop", "fang"];
         return n[i];
@@ -234,7 +227,6 @@ contract PlopsNFT is ERC721, ERC2981, Ownable, ReentrancyGuard {
             }
         }
 
-        _paintEyes(g, t.eyes);
         _paintMouth(g, t.mouth);
         _paintExtra(g, t.extra);
     }
@@ -242,32 +234,6 @@ contract PlopsNFT is ERC721, ERC2981, Ownable, ReentrancyGuard {
     function _set(bytes memory g, uint256 x, uint256 y, bytes1 key) private pure {
         uint256 i = y * GRID + x;
         if (i < g.length) g[i] = key;
-    }
-
-    function _paintEyes(bytes memory g, uint256 eyes) private pure {
-        if (eyes == 0) {
-            _set(g, 5, 5, "k");
-            _set(g, 9, 5, "k");
-        } else if (eyes == 1) {
-            _set(g, 5, 5, "k");
-            _set(g, 9, 5, "k");
-            _set(g, 5, 6, "k");
-            _set(g, 9, 6, "k");
-        } else if (eyes == 2) {
-            _set(g, 5, 5, "k");
-            _set(g, 9, 6, "k");
-        } else if (eyes == 3) {
-            for (uint256 x = 4; x <= 10; x++) _set(g, x, 5, "k");
-            _set(g, 5, 5, "a");
-        } else if (eyes == 4) {
-            _set(g, 5, 6, "k");
-            _set(g, 9, 6, "k");
-        } else {
-            _set(g, 5, 5, "k");
-            _set(g, 9, 5, "k");
-            _set(g, 4, 4, "a");
-            _set(g, 10, 4, "a");
-        }
     }
 
     function _paintMouth(bytes memory g, uint256 mouth) private pure {
@@ -307,7 +273,7 @@ contract PlopsNFT is ERC721, ERC2981, Ownable, ReentrancyGuard {
         (string memory fill, string memory shade, string memory accent) = bodyColors(t.body);
         if (key == "b") return fill;
         if (key == "s") return shade;
-        if (key == "k") return t.body == 5 ? "#e9eef2" : "#101913"; // ink bodies need light eyes
+        if (key == "k") return t.body == 5 ? "#e9eef2" : "#101913"; // ink bodies need a light mark
         if (key == "w") return "#ffffff";
         if (key == "a") return accent;
         return "";
@@ -374,8 +340,6 @@ contract PlopsNFT is ERC721, ERC2981, Ownable, ReentrancyGuard {
             bodyName(t.body),
             '"},{"trait_type":"Ears","value":"',
             earsName(t.ears),
-            '"},{"trait_type":"Eyes","value":"',
-            eyesName(t.eyes),
             '"},{"trait_type":"Mouth","value":"',
             mouthName(t.mouth),
             '"},{"trait_type":"Extra","value":"',

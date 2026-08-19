@@ -14,7 +14,7 @@ async function main() {
     const t = await nft.traitsOf(id);
     cells.push(
       `<figure><img src="data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}" width="180"/>` +
-        `<figcaption>#${id} ears${t.ears} eyes${t.eyes} mouth${t.mouth} extra${t.extra}</figcaption></figure>`,
+        `<figcaption>#${id} ears${t.ears} mouth${t.mouth} extra${t.extra}</figcaption></figure>`,
     );
   }
   fs.writeFileSync(
