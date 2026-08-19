@@ -10,6 +10,7 @@ const NAV = [
   { id: "deploy", label: "how to deploy" },
   { id: "curve", label: "bonding curve" },
   { id: "trade", label: "buying & selling" },
+  { id: "nfts", label: "plops genesis nfts" },
   { id: "networks", label: "networks" },
   { id: "contract", label: "contract" },
   { id: "faq", label: "faq" },
@@ -220,6 +221,30 @@ price     = ethReserve / tokenReserve`}</pre>
               wallet confirmation is enough
             </li>
             <li>1% of every trade goes to the creator; the rest stays in the curve</li>
+          </ul>
+        </Section>
+
+        <Section id="nfts" title="plops genesis nfts">
+          <p>
+            1500 droplets, 0.01 ETH each, max 10 per transaction. <code>PlopsNFT</code> is an
+            OpenZeppelin ERC-721 with an ERC-2981 royalty of 5%.
+          </p>
+          <ul className="list-inside list-disc space-y-1">
+            <li>
+              artwork and metadata are generated inside the contract — no IPFS pin and no server to
+              keep alive
+            </li>
+            <li>
+              traits come from <code>keccak256(collection, tokenId)</code>: fixed at deploy, the same
+              for everyone, and viewable before you mint — there is no reveal
+            </li>
+            <li>
+              OpenSea supports Robinhood Chain, so a mint is listed there automatically with floor
+              price, offers and rarity
+            </li>
+            <li>
+              open <span className="text-plops-ink">nfts</span> in the menu to mint
+            </li>
           </ul>
         </Section>
 

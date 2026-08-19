@@ -3,9 +3,20 @@ require("@nomicfoundation/hardhat-toolbox");
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: "0.8.24",
-    settings: {
-      optimizer: { enabled: true, runs: 200 },
+    compilers: [
+      {
+        version: "0.8.24",
+        // OpenZeppelin's ERC721 path needs the cancun `mcopy` opcode; Robinhood Chain
+        // (Arbitrum Orbit) executes it on mainnet and testnet alike.
+        settings: { optimizer: { enabled: true, runs: 200 }, evmVersion: "cancun" },
+      },
+    ],
+    overrides: {
+      // the artwork lives on-chain, so trade a little runtime gas for deployable bytecode
+      "contracts/PlopsNFT.sol": {
+        version: "0.8.24",
+        settings: { optimizer: { enabled: true, runs: 1 }, evmVersion: "cancun" },
+      },
     },
   },
   networks: {

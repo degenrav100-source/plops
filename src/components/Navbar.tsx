@@ -46,6 +46,10 @@ export default function Navbar({ theme, toggleTheme }: Props) {
     setOpen(false);
     navigate("#/factory");
   };
+  const goNft = () => {
+    setOpen(false);
+    navigate("#/nft");
+  };
 
   const explorer = `${CHAINS.mainnet.blockExplorerUrls[0]}`;
 
@@ -78,6 +82,9 @@ export default function Navbar({ theme, toggleTheme }: Props) {
       </button>
       <button type="button" onClick={() => goDocs()} className="nav-link">
         docs
+      </button>
+      <button type="button" onClick={goNft} className="nav-link">
+        nfts
       </button>
       <button type="button" onClick={goFactory} className="nav-link">
         launch index

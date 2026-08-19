@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export type Route = "app" | "docs" | "factory";
+export type Route = "app" | "docs" | "factory" | "nft";
 
 export interface RouteState {
   route: Route;
@@ -11,6 +11,7 @@ export interface RouteState {
 function parse(): RouteState {
   const hash = window.location.hash;
   if (hash.startsWith("#/factory")) return { route: "factory", section: null };
+  if (hash.startsWith("#/nft")) return { route: "nft", section: null };
   if (!hash.startsWith("#/docs")) return { route: "app", section: null };
   const section = hash.slice("#/docs".length).replace(/^\//, "");
   return { route: "docs", section: section || null };

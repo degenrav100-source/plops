@@ -35,6 +35,13 @@ export default function Footer() {
           </button>
           <button
             type="button"
+            onClick={() => navigate("#/nft")}
+            className="lowercase transition-colors hover:text-plops-ink"
+          >
+            nfts
+          </button>
+          <button
+            type="button"
             onClick={() => navigate("#/factory")}
             className="lowercase transition-colors hover:text-plops-ink"
           >
