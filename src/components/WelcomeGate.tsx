@@ -18,7 +18,10 @@ const steps = [
   },
 ];
 
-/** Guide + terms agreement. Shown on every visit, never remembered away. */
+/**
+ * Guide + terms agreement. Shown on every visit, never remembered away — except on the docs
+ * route, which stays readable so "read the docs first" is not gated by the gate itself.
+ */
 export default function WelcomeGate() {
   const [open, setOpen] = useState(true);
   const [agreed, setAgreed] = useState(false);

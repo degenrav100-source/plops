@@ -36,7 +36,7 @@ export default function App() {
             </main>
             <Footer />
             <WalletModal />
-            <WelcomeGate />
+            {route !== "docs" && <WelcomeGate />}
           </div>
         </LaunchProvider>
       </WalletProvider>
