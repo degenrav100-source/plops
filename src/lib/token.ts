@@ -107,6 +107,10 @@ export async function deployToken(
  * Deploy a curve priced in an ERC20 quote asset, then (optionally) make the creator's
  * seed buy. Used only when the chain has no launch index yet — the factory does both
  * in a single transaction.
+ *
+ * An ERC20 seed cannot ride along in the constructor the way `msg.value` can, so the buy is
+ * a separate approve + buy. The coin exists either way, so a rejected or failed seed buy is
+ * reported back instead of thrown: losing the address of a live contract is far worse.
  */
 export async function deployQuotedToken(
   provider: Eip1193Provider,
@@ -114,7 +118,7 @@ export async function deployQuotedToken(
   quote: QuoteAsset,
   virtualQuote: bigint,
   initialBuy: bigint,
-): Promise<{ address: string; txHash: string }> {
+): Promise<{ address: string; txHash: string; seedError?: string }> {
   const signer = await browserProvider(provider).getSigner();
   const creator = await signer.getAddress();
   const deployer = new ContractFactory(PLOPS_QUOTED_ABI, PLOPS_QUOTED_BYTECODE, signer);
@@ -136,8 +140,15 @@ export async function deployQuotedToken(
   const deployTx = contract.deploymentTransaction();
   await contract.waitForDeployment();
   const address = await contract.getAddress();
-  if (initialBuy > 0n) await buyToken(provider, address, initialBuy, 300, quote);
-  return { address, txHash: deployTx?.hash ?? "" };
+  let seedError: string | undefined;
+  if (initialBuy > 0n) {
+    try {
+      await buyToken(provider, address, initialBuy, 300, quote);
+    } catch (err) {
+      seedError = err instanceof Error ? err.message : "The first buy did not go through.";
+    }
+  }
+  return { address, txHash: deployTx?.hash ?? "", seedError };
 }
 
 /** Read all token + curve state via the chain RPC (independent of the wallet's current network). */

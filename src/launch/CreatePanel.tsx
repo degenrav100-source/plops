@@ -44,6 +44,7 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
     address: string;
     txHash: string;
     chainKey: ChainKey;
+    seedError?: string;
   } | null>(null);
 
   const chain = CHAINS[chainKey];
@@ -53,7 +54,10 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
 
   // A pair only exists on the chain that lists it, so reset when switching networks.
   useEffect(() => {
-    if (!pairs.some((q) => q.address === quoteAddress)) setQuoteAddress(NATIVE_QUOTE.address);
+    if (pairs.some((q) => q.address === quoteAddress)) return;
+    setQuoteAddress(NATIVE_QUOTE.address);
+    // the amount was typed in stock units; spending it as ETH would be a very expensive surprise
+    setInitialBuy("");
   }, [pairs, quoteAddress]);
 
   useEffect(() => {
@@ -167,7 +171,33 @@ export default function CreatePanel({ chainKey, onTradeToken }: Props) {
         <p className="mt-1 text-sm text-plops-ink/60">
           {name} (${symbol.toUpperCase()}) is trading on the curve on {deployedChain.chainName}.
         </p>
-        <div className="mt-5 flex flex-col gap-2">
+        {deployed.seedError && (
+          <p className="mt-3 rounded-lg border border-plops-down/40 bg-plops-down/10 px-3 py-2 text-left text-sm text-plops-down">
+            Your coin is deployed, but the first buy did not go through — open trade to retry it.
+            <span className="mt-1 block text-xs opacity-80">{deployed.seedError}</span>
+          </p>
+        )}
+
+        <div className="mt-4 rounded-lg border border-plops-edge bg-plops-muted px-3 py-2 text-left">
+          <p className="text-[11px] uppercase tracking-wide text-plops-ink/45">Contract address</p>
+          <div className="flex items-center gap-2">
+            <code className="min-w-0 flex-1 break-all text-xs text-plops-ink">
+              {deployed.address}
+            </code>
+            <button
+              type="button"
+              onClick={() => {
+                void navigator.clipboard?.writeText(deployed.address);
+                notify("Contract address copied.");
+              }}
+              className="shrink-0 rounded-md border border-plops-edge px-2 py-1 text-[11px] lowercase text-plops-ink/70 hover:text-plops-ink"
+            >
+              copy
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-3 flex flex-col gap-2">
           <a
             href={explorerToken(deployedChain, deployed.address)}
             target="_blank"
