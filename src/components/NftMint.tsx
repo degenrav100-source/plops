@@ -28,7 +28,7 @@ export default function NftMint() {
   const [chainKey, setChainKey] = useState<ChainKey>("mainnet");
   const [quantity, setQuantity] = useState(1);
   const [state, setState] = useState<CollectionState | null>(null);
-  const [previews, setPreviews] = useState<string[]>([]);
+  const [previews, setPreviews] = useState<{ id: number; src: string }[]>([]);
   const [minted, setMinted] = useState<{ ids: number[]; txHash: string } | null>(null);
   const [busy, setBusy] = useState<"deploy" | "mint" | null>(null);
   const [error, setError] = useState("");
@@ -39,6 +39,8 @@ export default function NftMint() {
   const price = state?.price ?? COLLECTION.price;
   const supply = state?.supply ?? COLLECTION.supply;
   const soldOut = state !== null && state.minted >= state.supply;
+  const remaining = state ? state.supply - state.minted : COLLECTION.supply;
+  const maxQuantity = Math.max(1, Math.min(COLLECTION.maxPerTx, remaining));
   const total = price * BigInt(quantity);
 
   const refresh = useCallback(async () => {
@@ -60,17 +62,23 @@ export default function NftMint() {
   }, [refresh]);
 
   useEffect(() => {
+    setQuantity((q) => Math.min(q, maxQuantity));
+  }, [maxQuantity]);
+
+  useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      if (!nftAddress(chain)) return;
-      const art = await Promise.all(PREVIEW_IDS.map((id) => tokenArt(chain, id).catch(() => "")));
-      if (!cancelled) setPreviews(art.filter(Boolean));
+      if (!address) return;
+      const art = await Promise.all(
+        PREVIEW_IDS.map(async (id) => ({ id, src: await tokenArt(chain, id).catch(() => "") })),
+      );
+      if (!cancelled) setPreviews(art.filter((a) => a.src !== ""));
     };
     void load();
     return () => {
       cancelled = true;
     };
-  }, [chain]);
+  }, [chain, address]);
 
   const deploy = async () => {
     setError("");
@@ -130,7 +138,7 @@ export default function NftMint() {
         <div>
           <h1 className="text-2xl font-bold lowercase text-plops-ink">plops genesis</h1>
           <p className="mt-2 max-w-2xl text-sm text-plops-ink/60">
-            1500 droplets on Robinhood Chain, {fmtEth(COLLECTION.price)} ETH each. Every trait, the
+            1500 pixel plops on Robinhood Chain, {fmtEth(COLLECTION.price)} ETH each. Every trait, the
             artwork and the metadata are generated inside the contract — no IPFS, no server, no
             reveal — so the collection outlives this website. OpenSea indexes Robinhood Chain, so
             mints show up there with floor price, offers and rarity.
@@ -156,11 +164,11 @@ export default function NftMint() {
 
       {previews.length > 0 && (
         <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {previews.map((src, i) => (
+          {previews.map(({ id, src }) => (
             <img
-              key={PREVIEW_IDS[i]}
+              key={id}
               src={src}
-              alt={`plops #${PREVIEW_IDS[i]}`}
+              alt={`plops #${id}`}
               className="w-full rounded-xl border border-plops-edge bg-plops-muted"
             />
           ))}
@@ -175,7 +183,7 @@ export default function NftMint() {
                 {state ? `${state.minted} / ${state.supply} minted` : "reading the collection…"}
               </span>
               <span className="text-xs lowercase text-plops-ink/55">
-                {fmtEth(price)} eth · max {COLLECTION.maxPerTx} per tx
+                {fmtEth(price)} eth · max {maxQuantity} per tx
               </span>
             </div>
 
@@ -199,7 +207,7 @@ export default function NftMint() {
                 <span className="w-8 text-center text-sm text-plops-ink">{quantity}</span>
                 <button
                   type="button"
-                  onClick={() => setQuantity((q) => Math.min(COLLECTION.maxPerTx, q + 1))}
+                  onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
                   className="px-3 py-2 text-plops-ink/70 hover:text-plops-ink"
                   aria-label="Mint one more"
                 >
@@ -261,7 +269,7 @@ export default function NftMint() {
             <p className="text-sm text-plops-ink/70">
               The collection is not deployed on {chain.chainName} yet. Whoever deploys it pays the
               gas once, owns the mint proceeds and the 5% royalty, and can never change the art —
-              every droplet is already fixed by the contract address.
+              every plop is already fixed by the contract address.
             </p>
             <button
               type="button"
@@ -313,7 +321,7 @@ export default function NftMint() {
 
       <dl className="mt-6 grid gap-3 text-xs sm:grid-cols-3">
         {[
-          ["supply", `${supply} droplets`],
+          ["supply", `${supply} pixel plops`],
           ["mint price", `${fmtEth(COLLECTION.price)} eth`],
           ["royalty", `${COLLECTION.royaltyBps / 100}% (ERC-2981)`],
         ].map(([k, v]) => (

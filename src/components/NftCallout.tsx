@@ -17,7 +17,7 @@ export default function NftCallout() {
         <div className="min-w-0">
           <p className="text-sm font-semibold lowercase text-plops-ink">plops genesis nfts</p>
           <p className="text-xs text-plops-ink/55">
-            {COLLECTION.supply} fully on-chain droplets · {fmtEth(COLLECTION.price)} eth mint ·
+            {COLLECTION.supply} fully on-chain pixel plops · {fmtEth(COLLECTION.price)} eth mint ·
             tradable on opensea
           </p>
         </div>

@@ -104,7 +104,7 @@ export function svgDataUri(svg: string): string {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
-/** Mint `quantity` droplets. Returns the ids that were minted. */
+/** Mint `quantity` plops. Returns the ids that were minted. */
 export async function mintPlops(
   provider: Eip1193Provider,
   chain: ChainConfig,

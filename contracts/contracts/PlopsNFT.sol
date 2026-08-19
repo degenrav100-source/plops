@@ -8,7 +8,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 
 /**
- * The plops genesis collection: 1500 droplets, 0.01 ETH each, art and metadata generated inside
+ * The plops genesis collection: 1500 pixel plops, 0.01 ETH each, art and metadata generated inside
  * the contract. Nothing is hosted off-chain, so the collection cannot break when a pinning
  * service or a website goes away, and marketplaces (OpenSea supports Robinhood Chain) read the
  * same `tokenURI` everyone else does.
@@ -33,10 +33,14 @@ contract PlopsNFT is ERC721, ERC2981, Ownable, ReentrancyGuard {
     // ---------------------------------------------------------------- minting
 
     function mint(uint256 quantity) external payable nonReentrant {
-        mintTo(msg.sender, quantity);
+        _mintTo(msg.sender, quantity);
     }
 
-    function mintTo(address to, uint256 quantity) public payable {
+    function mintTo(address to, uint256 quantity) external payable nonReentrant {
+        _mintTo(to, quantity);
+    }
+
+    function _mintTo(address to, uint256 quantity) private {
         require(to != address(0), "to=0");
         require(quantity > 0 && quantity <= MAX_PER_TX, "bad quantity");
         require(totalMinted + quantity <= MAX_SUPPLY, "sold out");
@@ -61,6 +65,13 @@ contract PlopsNFT is ERC721, ERC2981, Ownable, ReentrancyGuard {
     }
 
     // ------------------------------------------------------------------- art
+    //
+    // Every plop is the pixel logo redrawn on a 12x12 grid: same silhouette family, different
+    // ears, colours, eyes, mouth and extras. The grid is filled cell by cell, then emitted as
+    // one <rect> per horizontal run of the same colour.
+
+    uint256 private constant GRID = 12;
+    uint256 private constant CELL = 48;
 
     /** Deterministic per-token entropy: the same for every caller, known before the mint. */
     function seedOf(uint256 tokenId) public view returns (uint256) {
@@ -70,39 +81,37 @@ contract PlopsNFT is ERC721, ERC2981, Ownable, ReentrancyGuard {
     struct Traits {
         uint256 backdrop;
         uint256 body;
+        uint256 ears;
         uint256 eyes;
         uint256 mouth;
-        uint256 aura;
-        uint256 sparkles;
+        uint256 extra;
     }
 
     function traitsOf(uint256 tokenId) public view returns (Traits memory t) {
         uint256 s = seedOf(tokenId);
         t.backdrop = (s >> 8) % 6;
         t.body = (s >> 24) % 8;
-        t.eyes = (s >> 40) % 6;
-        t.mouth = (s >> 56) % 5;
-        // auras are the rarity axis: ~57% none, then glow, ring, and a 6% halo
-        uint256 a = (s >> 72) % 100;
-        t.aura = a < 57 ? 0 : a < 80 ? 1 : a < 94 ? 2 : 3;
-        t.sparkles = (s >> 88) % 6;
+        t.ears = (s >> 36) % 4;
+        t.eyes = (s >> 48) % 6;
+        t.mouth = (s >> 60) % 4;
+        // extras are the rarity axis: ~55% none, blush, sparkles, and a 7% crown
+        uint256 e = (s >> 72) % 100;
+        t.extra = e < 55 ? 0 : e < 78 ? 1 : e < 93 ? 2 : 3;
     }
 
     function backdropName(uint256 i) internal pure returns (string memory) {
-        string[6] memory n = ["mist", "lagoon", "bubblegum", "midnight", "sherbet", "glacier"];
+        string[6] memory n = ["paper", "mist", "lagoon", "bubblegum", "midnight", "sherbet"];
         return n[i];
     }
 
-    /** background gradient: inner, outer */
-    function backdropColors(uint256 i) internal pure returns (string memory, string memory) {
-        string[6] memory inner = ["#f4fbff", "#d9fff1", "#ffe6f4", "#1a2340", "#fff1dc", "#e6f4ff"];
-        string[6] memory outer = ["#cfe6ff", "#8fe3c8", "#ffb3d9", "#070b18", "#ffc9a3", "#a9c8ff"];
-        return (inner[i], outer[i]);
+    function backdropColor(uint256 i) internal pure returns (string memory) {
+        string[6] memory c = ["#f7f7f2", "#e8f3ff", "#dcfbee", "#ffe6f4", "#0d1220", "#ffeedd"];
+        return c[i];
     }
 
     function bodyName(uint256 i) internal pure returns (string memory) {
         string[8] memory n = [
-            "spring",
+            "plops green",
             "cotton",
             "reef",
             "sorbet",
@@ -114,140 +123,223 @@ contract PlopsNFT is ERC721, ERC2981, Ownable, ReentrancyGuard {
         return n[i];
     }
 
-    /** body gradient: light, dark */
-    function bodyColors(uint256 i) internal pure returns (string memory, string memory) {
-        string[8] memory light = [
-            "#b8ffd9",
-            "#ffd6ec",
-            "#9fe8ff",
-            "#ffe1a8",
-            "#d3c4ff",
-            "#8a93a8",
-            "#ffe89a",
+    /** body colour, its shadow, and the accent used by extras */
+    function bodyColors(uint256 i)
+        internal
+        pure
+        returns (string memory fill, string memory shade, string memory accent)
+    {
+        string[8] memory f = [
+            "#4caf50",
+            "#f489bd",
+            "#3ea6dd",
+            "#f0a94a",
+            "#8f6cf2",
+            "#232a3a",
+            "#e3b93d",
+            "#e9eef2"
+        ];
+        string[8] memory sh = [
+            "#2f8a3a",
+            "#cf5f96",
+            "#2a7cab",
+            "#c47f27",
+            "#6746c4",
+            "#12161f",
+            "#b38c1c",
+            "#b9c4cc"
+        ];
+        string[8] memory ac = [
+            "#a5f3b6",
+            "#ffd7ea",
+            "#bdeaff",
+            "#ffdca8",
+            "#d6c9ff",
+            "#8affc8",
+            "#fff0b0",
             "#ffffff"
         ];
-        string[8] memory dark = [
-            "#25c07a",
-            "#e8558f",
-            "#2f8fd0",
-            "#e08b2f",
-            "#6f4fd8",
-            "#1b2030",
-            "#c99414",
-            "#c8d4de"
-        ];
-        return (light[i], dark[i]);
+        return (f[i], sh[i], ac[i]);
+    }
+
+    function earsName(uint256 i) internal pure returns (string memory) {
+        string[4] memory n = ["classic", "wide", "bent", "antenna"];
+        return n[i];
     }
 
     function eyesName(uint256 i) internal pure returns (string memory) {
-        string[6] memory n = ["dot", "wide", "sleepy", "wink", "starry", "visor"];
+        string[6] memory n = ["dot", "wide", "wink", "visor", "sleepy", "starry"];
         return n[i];
-    }
-
-    function eyesSVG(uint256 i) internal pure returns (string memory) {
-        if (i == 0) {
-            return
-                '<circle cx="270" cy="380" r="16"/><circle cx="370" cy="380" r="16"/>';
-        }
-        if (i == 1) {
-            return
-                '<circle cx="268" cy="378" r="26" fill="#fff"/><circle cx="372" cy="378" r="26" fill="#fff"/>'
-                '<circle cx="274" cy="382" r="12"/><circle cx="378" cy="382" r="12"/>';
-        }
-        if (i == 2) {
-            return
-                '<path d="M244 382q26 22 52 0" fill="none" stroke="#101913" stroke-width="9" stroke-linecap="round"/>'
-                '<path d="M344 382q26 22 52 0" fill="none" stroke="#101913" stroke-width="9" stroke-linecap="round"/>';
-        }
-        if (i == 3) {
-            return
-                '<circle cx="270" cy="380" r="16"/>'
-                '<path d="M344 380q26-22 52 0" fill="none" stroke="#101913" stroke-width="9" stroke-linecap="round"/>';
-        }
-        if (i == 4) {
-            return
-                '<path d="M270 356l9 20 22 4-16 15 4 22-19-11-19 11 4-22-16-15 22-4z"/>'
-                '<path d="M374 356l9 20 22 4-16 15 4 22-19-11-19 11 4-22-16-15 22-4z"/>';
-        }
-        return
-            '<rect x="232" y="358" width="176" height="44" rx="22" fill="#101913" opacity="0.92"/>'
-            '<rect x="248" y="372" width="52" height="14" rx="7" fill="#8affc8" opacity="0.9"/>';
     }
 
     function mouthName(uint256 i) internal pure returns (string memory) {
-        string[5] memory n = ["smile", "plop", "smirk", "gasp", "flat"];
+        string[4] memory n = ["none", "smile", "plop", "fang"];
         return n[i];
     }
 
-    function mouthSVG(uint256 i) internal pure returns (string memory) {
-        if (i == 0) {
-            return
-                '<path d="M288 428q32 30 64 0" fill="none" stroke="#101913" stroke-width="10" stroke-linecap="round"/>';
-        }
-        if (i == 1) {
-            return '<ellipse cx="320" cy="436" rx="20" ry="24" fill="#101913"/>';
-        }
-        if (i == 2) {
-            return
-                '<path d="M292 434q34 16 58-6" fill="none" stroke="#101913" stroke-width="10" stroke-linecap="round"/>';
-        }
-        if (i == 3) {
-            return '<circle cx="320" cy="436" r="18" fill="#101913"/>';
-        }
-        return
-            '<path d="M292 434h56" fill="none" stroke="#101913" stroke-width="10" stroke-linecap="round"/>';
-    }
-
-    function auraName(uint256 i) internal pure returns (string memory) {
-        string[4] memory n = ["none", "glow", "ring", "halo"];
+    function extraName(uint256 i) internal pure returns (string memory) {
+        string[4] memory n = ["none", "blush", "sparkles", "crown"];
         return n[i];
     }
 
-    function auraSVG(uint256 i, string memory tint) internal pure returns (string memory) {
-        if (i == 1) {
-            return
-                string.concat(
-                    '<circle cx="320" cy="400" r="230" fill="',
-                    tint,
-                    '" opacity="0.18" filter="url(#soft)"/>'
-                );
+    /**
+     * The plops mark at 2x: the logo pixels themselves, one character per cell (`.` empty,
+     * `b` body). Only the ear rows change between variants, so the silhouette always reads
+     * as the same logo.
+     */
+    function _silhouette(uint256 ears) internal pure returns (string[12] memory rows) {
+        rows = [
+            "....bb....bb",
+            "....bb....bb",
+            "....bb....bb",
+            "....bb....bb",
+            "bb..bbbbbbbb",
+            "bb..bbbbbbbb",
+            "..bbbbbbbbbb",
+            "..bbbbbbbbbb",
+            "......bbbb..",
+            "......bbbb..",
+            "......bbbb..",
+            "......bbbb.."
+        ];
+        if (ears == 1) {
+            rows[0] = "...bbb...bbb";
+            rows[1] = "...bbb...bbb";
+            rows[2] = "...bbb...bbb";
+            rows[3] = "...bbb...bbb";
+        } else if (ears == 2) {
+            rows[0] = "...bb.....bb";
+        } else if (ears == 3) {
+            rows[0] = ".....b.....b";
+            rows[1] = ".....b.....b";
         }
-        if (i == 2) {
-            return
-                string.concat(
-                    '<circle cx="320" cy="400" r="238" fill="none" stroke="',
-                    tint,
-                    '" stroke-width="6" opacity="0.65"/>'
-                );
+    }
+
+    /** Grid of colour keys: `.` backdrop, `b` body, `s` shade, `k` ink, `w` white, `a` accent. */
+    function _grid(Traits memory t) internal pure returns (bytes memory g) {
+        string[12] memory rows = _silhouette(t.ears);
+        g = new bytes(GRID * GRID);
+        for (uint256 y = 0; y < GRID; y++) {
+            bytes memory row = bytes(rows[y]);
+            for (uint256 x = 0; x < GRID; x++) g[y * GRID + x] = row[x];
         }
-        if (i == 3) {
-            return
-                string.concat(
-                    '<ellipse cx="320" cy="132" rx="104" ry="26" fill="none" stroke="',
-                    tint,
-                    '" stroke-width="12" opacity="0.95" filter="url(#soft)"/>'
-                    '<ellipse cx="320" cy="132" rx="104" ry="26" fill="none" stroke="',
-                    tint,
-                    '" stroke-width="7"/>'
-                );
+
+        // one darker column and row along the light-facing edges, so the block reads as volume
+        for (uint256 y = 0; y < GRID; y++) {
+            for (uint256 x = 0; x < GRID; x++) {
+                if (g[y * GRID + x] != "b") continue;
+                bool edgeRight = x + 1 == GRID || g[y * GRID + x + 1] == ".";
+                bool edgeDown = y + 1 == GRID || g[(y + 1) * GRID + x] == ".";
+                if (edgeRight || edgeDown) g[y * GRID + x] = "s";
+            }
         }
+
+        _paintEyes(g, t.eyes);
+        _paintMouth(g, t.mouth);
+        _paintExtra(g, t.extra);
+    }
+
+    function _set(bytes memory g, uint256 x, uint256 y, bytes1 key) private pure {
+        uint256 i = y * GRID + x;
+        if (i < g.length) g[i] = key;
+    }
+
+    function _paintEyes(bytes memory g, uint256 eyes) private pure {
+        if (eyes == 0) {
+            _set(g, 5, 5, "k");
+            _set(g, 9, 5, "k");
+        } else if (eyes == 1) {
+            _set(g, 5, 5, "k");
+            _set(g, 9, 5, "k");
+            _set(g, 5, 6, "k");
+            _set(g, 9, 6, "k");
+        } else if (eyes == 2) {
+            _set(g, 5, 5, "k");
+            _set(g, 9, 6, "k");
+        } else if (eyes == 3) {
+            for (uint256 x = 4; x <= 10; x++) _set(g, x, 5, "k");
+            _set(g, 5, 5, "a");
+        } else if (eyes == 4) {
+            _set(g, 5, 6, "k");
+            _set(g, 9, 6, "k");
+        } else {
+            _set(g, 5, 5, "k");
+            _set(g, 9, 5, "k");
+            _set(g, 4, 4, "a");
+            _set(g, 10, 4, "a");
+        }
+    }
+
+    function _paintMouth(bytes memory g, uint256 mouth) private pure {
+        if (mouth == 1) {
+            _set(g, 7, 7, "k");
+            _set(g, 8, 7, "k");
+        } else if (mouth == 2) {
+            _set(g, 7, 7, "k");
+            _set(g, 8, 7, "k");
+            _set(g, 7, 8, "k");
+            _set(g, 8, 8, "k");
+        } else if (mouth == 3) {
+            _set(g, 7, 7, "k");
+            _set(g, 8, 7, "k");
+            _set(g, 7, 8, "w");
+        }
+    }
+
+    function _paintExtra(bytes memory g, uint256 extra) private pure {
+        if (extra == 1) {
+            _set(g, 4, 6, "a");
+            _set(g, 10, 6, "a");
+        } else if (extra == 2) {
+            _set(g, 1, 0, "a");
+            _set(g, 1, 2, "a");
+            _set(g, 2, 9, "a");
+            _set(g, 11, 10, "a");
+        } else if (extra == 3) {
+            _set(g, 6, 0, "a");
+            _set(g, 7, 0, "a");
+            _set(g, 8, 0, "a");
+            _set(g, 7, 1, "a");
+        }
+    }
+
+    function _colorOf(bytes1 key, Traits memory t) private pure returns (string memory) {
+        (string memory fill, string memory shade, string memory accent) = bodyColors(t.body);
+        if (key == "b") return fill;
+        if (key == "s") return shade;
+        if (key == "k") return t.body == 5 ? "#e9eef2" : "#101913"; // ink bodies need light eyes
+        if (key == "w") return "#ffffff";
+        if (key == "a") return accent;
         return "";
     }
 
-    function sparklesSVG(uint256 count, uint256 seed) internal pure returns (string memory out) {
-        string[6] memory scales = ["0.4", "0.6", "0.8", "1", "1.3", "1.7"];
-        for (uint256 i = 0; i < count; i++) {
-            uint256 s = uint256(keccak256(abi.encodePacked(seed, i)));
-            out = string.concat(
-                out,
-                '<g transform="translate(',
-                _str(60 + (s % 520)),
-                " ",
-                _str(60 + ((s >> 32) % 560)),
-                ") scale(",
-                scales[(s >> 64) % 6],
-                ')"><path d="M0 -14Q3 -3 14 0Q3 3 0 14Q-3 3-14 0Q-3 -3 0 -14z" fill="#ffffff" opacity="0.85"/></g>'
-            );
+    /** One <rect> per run of identical cells; empty cells fall through to the backdrop. */
+    function _pixels(Traits memory t) internal pure returns (string memory out) {
+        bytes memory g = _grid(t);
+        for (uint256 y = 0; y < GRID; y++) {
+            uint256 x = 0;
+            while (x < GRID) {
+                bytes1 key = g[y * GRID + x];
+                uint256 run = 1;
+                while (x + run < GRID && g[y * GRID + x + run] == key) run++;
+                if (key != ".") {
+                    out = string.concat(
+                        out,
+                        '<rect x="',
+                        _str(32 + x * CELL),
+                        '" y="',
+                        _str(32 + y * CELL),
+                        '" width="',
+                        _str(run * CELL),
+                        '" height="',
+                        _str(CELL),
+                        '" fill="',
+                        _colorOf(key, t),
+                        '"/>'
+                    );
+                }
+                x += run;
+            }
         }
     }
 
@@ -255,52 +347,17 @@ contract PlopsNFT is ERC721, ERC2981, Ownable, ReentrancyGuard {
     function tokenSVG(uint256 tokenId) public view returns (string memory) {
         require(tokenId > 0 && tokenId <= MAX_SUPPLY, "bad id");
         Traits memory t = traitsOf(tokenId);
-        return string.concat(_defs(t), _scene(t, tokenId), _face(t, tokenId));
-    }
-
-    function _defs(Traits memory t) internal pure returns (string memory) {
-        (string memory bgIn, string memory bgOut) = backdropColors(t.backdrop);
-        (string memory bodyLight, string memory bodyDark) = bodyColors(t.body);
+        bool dark = t.backdrop == 4;
         return
             string.concat(
-                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 700" width="640" height="700">'
-                "<defs>"
-                '<radialGradient id="bg" cx="50%" cy="42%" r="72%"><stop offset="0" stop-color="',
-                bgIn,
-                '"/><stop offset="1" stop-color="',
-                bgOut,
-                '"/></radialGradient>'
-                '<linearGradient id="body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="',
-                bodyLight,
-                '"/><stop offset="1" stop-color="',
-                bodyDark,
-                '"/></linearGradient>'
-                '<filter id="soft"><feGaussianBlur stdDeviation="12"/></filter>'
-                "</defs>"
-            );
-    }
-
-    function _scene(Traits memory t, uint256 tokenId) internal view returns (string memory) {
-        (, string memory bodyDark) = bodyColors(t.body);
-        return
-            string.concat(
-                '<rect width="640" height="700" fill="url(#bg)"/>',
-                sparklesSVG(t.sparkles, seedOf(tokenId)),
-                auraSVG(t.aura, bodyDark),
-                // the droplet: a point at the top falling into a round belly
-                '<path d="M320 118C398 250 470 330 470 404a150 150 0 0 1-300 0c0-74 72-154 150-286z" fill="url(#body)"/>'
-                '<ellipse cx="252" cy="330" rx="34" ry="48" fill="#ffffff" opacity="0.35" transform="rotate(-18 252 330)"/>'
-            );
-    }
-
-    function _face(Traits memory t, uint256 tokenId) internal pure returns (string memory) {
-        return
-            string.concat(
-                '<g fill="#101913">',
-                eyesSVG(t.eyes),
-                mouthSVG(t.mouth),
-                "</g>"
-                '<text x="320" y="640" font-family="ui-monospace,monospace" font-size="34" fill="#101913" opacity="0.72" text-anchor="middle">plops #',
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 700" width="640" height="700" shape-rendering="crispEdges">'
+                '<rect width="640" height="700" fill="',
+                backdropColor(t.backdrop),
+                '"/>',
+                _pixels(t),
+                '<text x="320" y="666" font-family="ui-monospace,monospace" font-size="30" fill="',
+                dark ? "#ffffff" : "#101913",
+                '" opacity="0.7" text-anchor="middle">plops #',
                 _str(tokenId),
                 "</text></svg>"
             );
@@ -315,21 +372,21 @@ contract PlopsNFT is ERC721, ERC2981, Ownable, ReentrancyGuard {
             backdropName(t.backdrop),
             '"},{"trait_type":"Body","value":"',
             bodyName(t.body),
+            '"},{"trait_type":"Ears","value":"',
+            earsName(t.ears),
             '"},{"trait_type":"Eyes","value":"',
             eyesName(t.eyes),
             '"},{"trait_type":"Mouth","value":"',
             mouthName(t.mouth),
-            '"},{"trait_type":"Aura","value":"',
-            auraName(t.aura),
-            '"},{"trait_type":"Sparkles","value":',
-            _str(t.sparkles),
-            "}]"
+            '"},{"trait_type":"Extra","value":"',
+            extraName(t.extra),
+            '"}]'
         );
 
         string memory json = string.concat(
             '{"name":"plops #',
             _str(tokenId),
-            '","description":"1500 droplets born on Robinhood Chain. Art and metadata live entirely inside the contract - no IPFS, no server, no reveal.","image":"data:image/svg+xml;base64,',
+            '","description":"Pixel plops: the plops mark redrawn on-chain, one of 1500, no two alike. Art and metadata live entirely inside the contract - no IPFS, no server, no reveal.","image":"data:image/svg+xml;base64,',
             Base64.encode(bytes(tokenSVG(tokenId))),
             '","attributes":',
             attributes,
@@ -341,11 +398,15 @@ contract PlopsNFT is ERC721, ERC2981, Ownable, ReentrancyGuard {
 
     /** Collection-level metadata, read by OpenSea to name the collection and set the fee. */
     function contractURI() external view returns (string memory) {
+        // read the royalty actually in force, so `setRoyalty` cannot leave this metadata stale
+        (address receiver, uint256 feeBps) = royaltyInfo(1, 10_000);
         string memory json = string.concat(
-            '{"name":"plops genesis","description":"1500 fully on-chain droplets from the plops launchpad on Robinhood Chain.","image":"data:image/svg+xml;base64,',
+            '{"name":"plops genesis","description":"1500 fully on-chain pixel plops from the plops launchpad on Robinhood Chain.","image":"data:image/svg+xml;base64,',
             Base64.encode(bytes(tokenSVG(1))),
-            '","seller_fee_basis_points":500,"fee_recipient":"',
-            _hexAddress(owner()),
+            '","seller_fee_basis_points":',
+            _str(feeBps),
+            ',"fee_recipient":"',
+            _hexAddress(receiver),
             '"}'
         );
         return string.concat("data:application/json;base64,", Base64.encode(bytes(json)));

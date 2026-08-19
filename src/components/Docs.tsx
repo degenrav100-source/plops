@@ -226,7 +226,7 @@ price     = ethReserve / tokenReserve`}</pre>
 
         <Section id="nfts" title="plops genesis nfts">
           <p>
-            1500 droplets, 0.01 ETH each, max 10 per transaction. <code>PlopsNFT</code> is an
+            1500 pixel plops, 0.01 ETH each, max 10 per transaction. <code>PlopsNFT</code> is an
             OpenZeppelin ERC-721 with an ERC-2981 royalty of 5%.
           </p>
           <ul className="list-inside list-disc space-y-1">

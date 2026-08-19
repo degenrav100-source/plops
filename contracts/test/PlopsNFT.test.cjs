@@ -75,7 +75,7 @@ describe("PlopsNFT", function () {
     expect(await nft.supportsInterface("0x2a55205a")).to.equal(true); // ERC2981
   });
 
-  it("renders on-chain art and metadata", async function () {
+  it("renders on-chain pixel art and metadata", async function () {
     const { nft, buyer } = await deploy();
     await nft.connect(buyer).mint(1, { value: PRICE });
 
@@ -83,6 +83,8 @@ describe("PlopsNFT", function () {
     expect(svg.startsWith("<svg")).to.equal(true);
     expect(svg.endsWith("</svg>")).to.equal(true);
     expect(svg).to.contain("plops #1");
+    expect(svg).to.contain('shape-rendering="crispEdges"');
+    expect((svg.match(/<rect /g) ?? []).length).to.be.greaterThan(10); // backdrop + pixel blocks
 
     const meta = JSON.parse(
       decodeDataURI(await nft.tokenURI(1), "data:application/json;base64,"),
@@ -92,10 +94,10 @@ describe("PlopsNFT", function () {
     expect(meta.attributes.map((a) => a.trait_type)).to.deep.equal([
       "Backdrop",
       "Body",
+      "Ears",
       "Eyes",
       "Mouth",
-      "Aura",
-      "Sparkles",
+      "Extra",
     ]);
 
     const collection = JSON.parse(
@@ -103,6 +105,23 @@ describe("PlopsNFT", function () {
     );
     expect(collection.name).to.equal("plops genesis");
     expect(collection.seller_fee_basis_points).to.equal(500);
+  });
+
+  it("keeps collection metadata in step with the royalty in force", async function () {
+    const { nft, owner, other } = await deploy();
+    await nft.connect(owner).setRoyalty(other.address, 250);
+    const collection = JSON.parse(
+      decodeDataURI(await nft.contractURI(), "data:application/json;base64,"),
+    );
+    expect(collection.seller_fee_basis_points).to.equal(250);
+    expect(collection.fee_recipient).to.equal(other.address.toLowerCase());
+  });
+
+  it("draws a different plop for every token", async function () {
+    const { nft } = await deploy();
+    const art = new Set();
+    for (const id of [1, 2, 3, 42, 777, 1500]) art.add(await nft.tokenSVG(id));
+    expect(art.size).to.equal(6);
   });
 
   it("keeps art previewable before the mint and fixed afterwards", async function () {
@@ -119,17 +138,25 @@ describe("PlopsNFT", function () {
 
   it("spreads traits across the collection", async function () {
     const { nft } = await deploy();
-    const seen = { backdrop: new Set(), body: new Set(), eyes: new Set(), aura: new Set() };
+    const seen = {
+      backdrop: new Set(),
+      body: new Set(),
+      ears: new Set(),
+      eyes: new Set(),
+      extra: new Set(),
+    };
     for (let id = 1; id <= 120; id++) {
       const t = await nft.traitsOf(id);
       seen.backdrop.add(t.backdrop);
       seen.body.add(t.body);
+      seen.ears.add(t.ears);
       seen.eyes.add(t.eyes);
-      seen.aura.add(t.aura);
+      seen.extra.add(t.extra);
     }
     expect(seen.backdrop.size).to.equal(6);
     expect(seen.body.size).to.equal(8);
+    expect(seen.ears.size).to.equal(4);
     expect(seen.eyes.size).to.equal(6);
-    expect(seen.aura.size).to.equal(4);
+    expect(seen.extra.size).to.equal(4);
   });
 });
