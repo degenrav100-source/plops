@@ -1,8 +1,14 @@
 import {
+  AbiCoder,
   BrowserProvider,
   Contract,
   ContractFactory,
   JsonRpcProvider,
+  concat,
+  getAddress,
+  getCreate2Address,
+  id,
+  keccak256,
   type Eip1193Provider as EthersEip1193Provider,
 } from "ethers";
 import { PLOPS_NFT_ABI, PLOPS_NFT_BYTECODE } from "../contracts/PlopsNFT";
@@ -20,6 +26,27 @@ export const COLLECTION = {
   maxPerTx: 10,
   royaltyBps: 500,
 };
+
+/**
+ * Arachnid's deterministic-deployment proxy, present at the same address on both Robinhood Chain
+ * networks. It deploys `calldata[32:]` with CREATE2 using `calldata[:32]` as the salt, which makes
+ * the collection address a pure function of (proxy, salt, init code) — knowable before any
+ * transaction is signed, and identical on mainnet and testnet.
+ */
+export const CREATE2_DEPLOYER = "0x4e59b44847b379578588920cA78FbF26c0B4956C";
+
+export const NFT_SALT = id("plops genesis v1");
+
+/** Creation bytecode plus the ABI-encoded constructor owner — the CREATE2 address depends on it. */
+export function collectionInitCode(owner: string): string {
+  const args = AbiCoder.defaultAbiCoder().encode(["address"], [getAddress(owner)]);
+  return concat([PLOPS_NFT_BYTECODE, args]);
+}
+
+/** The address plops genesis will have once `owner` deploys it through the CREATE2 proxy. */
+export function predictCollectionAddress(owner: string): string {
+  return getCreate2Address(CREATE2_DEPLOYER, NFT_SALT, keccak256(collectionInitCode(owner)));
+}
 
 export interface CollectionState {
   minted: number;
@@ -63,12 +90,33 @@ function rpcContract(chain: ChainConfig, address: string): Contract {
   return new Contract(address, PLOPS_NFT_ABI, rpc);
 }
 
-/** One-off deploy of the collection, paid by the connected wallet, which becomes its owner. */
+/**
+ * One-off deploy of the collection, paid by the connected wallet, which becomes its owner.
+ * Goes through the CREATE2 proxy so the address matches `predictCollectionAddress(owner)`; falls
+ * back to a plain deploy on a chain where the proxy is missing.
+ */
 export async function deployCollection(
   provider: Eip1193Provider,
 ): Promise<{ address: string; txHash: string }> {
-  const signer = await browserProvider(provider).getSigner();
+  const eth = browserProvider(provider);
+  const signer = await eth.getSigner();
   const owner = await signer.getAddress();
+
+  if ((await eth.getCode(CREATE2_DEPLOYER)) !== "0x") {
+    const address = predictCollectionAddress(owner);
+    if ((await eth.getCode(address)) !== "0x") return { address, txHash: "" };
+
+    const tx = await signer.sendTransaction({
+      to: CREATE2_DEPLOYER,
+      data: concat([NFT_SALT, collectionInitCode(owner)]),
+    });
+    await tx.wait();
+    if ((await eth.getCode(address)) === "0x") {
+      throw new Error("The deploy transaction left no code at the predicted address.");
+    }
+    return { address, txHash: tx.hash };
+  }
+
   const deployer = new ContractFactory(PLOPS_NFT_ABI, PLOPS_NFT_BYTECODE, signer);
   const contract = await deployer.deploy(owner);
   const tx = contract.deploymentTransaction();

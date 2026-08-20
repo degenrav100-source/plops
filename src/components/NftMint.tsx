@@ -11,6 +11,7 @@ import {
   nftAddress,
   openseaCollection,
   openseaItem,
+  predictCollectionAddress,
   readCollection,
   setNftOverride,
   tokenArt,
@@ -36,6 +37,7 @@ export default function NftMint() {
 
   const chain = CHAINS[chainKey];
   const address = nftAddress(chain);
+  const predicted = connection ? predictCollectionAddress(connection.address) : "";
   const price = state?.price ?? COLLECTION.price;
   const supply = state?.supply ?? COLLECTION.supply;
   const soldOut = state !== null && state.minted >= state.supply;
@@ -271,6 +273,13 @@ export default function NftMint() {
               gas once, owns the mint proceeds and the 5% royalty, and can never change the art —
               every plop is already fixed by the contract address.
             </p>
+            {predicted && (
+              <p className="mt-3 text-xs text-plops-ink/55">
+                deploying from your wallet through the CREATE2 proxy puts it at{" "}
+                <span className="break-all font-mono text-plops-ink">{predicted}</span> — the same
+                address on mainnet and testnet.
+              </p>
+            )}
             <button
               type="button"
               onClick={() => void deploy()}
